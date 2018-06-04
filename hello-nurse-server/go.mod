@@ -1,4 +1,4 @@
-module github.com/hellupline/hello-nurse
+module github.com/hellupline/hello-nurse/hello-nurse-server
 
 require (
 	github.com/deckarep/golang-set v0.0.0-20180603214616-504e848d77ea

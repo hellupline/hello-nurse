@@ -29,17 +29,17 @@ assert (
 
 
 # delete favorites
-for favorite in favorites:
-    response = session.request(
-        "DELETE", f"{SERVER_URL}/favorites/{favorite['name']}")
-    assert response.status_code == 200, "Response is not 200"
+# for favorite in favorites:
+#     response = session.request(
+#         "DELETE", f"{SERVER_URL}/favorites/{favorite['name']}")
+#     assert response.status_code == 200, "Response is not 200"
 
 
 # assert all favorites deleted
-response = session.request("GET", f"{SERVER_URL}/favorites")
-favorites = response.json()["favorites"]
-assert response.status_code == 200, "Response is not 200"
-assert not favorites, "Not all favorites deleted"
+# response = session.request("GET", f"{SERVER_URL}/favorites")
+# favorites = response.json()["favorites"]
+# assert response.status_code == 200, "Response is not 200"
+# assert not favorites, "Not all favorites deleted"
 
 
 # create posts
@@ -78,21 +78,21 @@ for i in range(MAX_POSTS):
 
 
 # delete posts
-for favorite in posts:
-    response = session.request(
-        "DELETE", f"{SERVER_URL}/posts/{favorite['id']}")
-    assert response.status_code == 200, "Response is not 200"
+# for favorite in posts:
+#     response = session.request(
+#         "DELETE", f"{SERVER_URL}/posts/{favorite['id']}")
+#     assert response.status_code == 200, "Response is not 200"
 
 
 # assert all posts deleted
-response = session.request("GET", f"{SERVER_URL}/posts")
-posts = response.json()["posts"]
-assert response.status_code == 200, "Response is not 200"
-assert not posts, "Not all posts deleted"
+# response = session.request("GET", f"{SERVER_URL}/posts")
+# posts = response.json()["posts"]
+# assert response.status_code == 200, "Response is not 200"
+# assert not posts, "Not all posts deleted"
 
 
 # assert all tags deleted
-response = session.request("GET", f"{SERVER_URL}/tags")
-tags = response.json()["tags"]
-assert response.status_code == 200, "Response is not 200"
-assert not tags, "Not all tags deleted"
+# response = session.request("GET", f"{SERVER_URL}/tags")
+# tags = response.json()["tags"]
+# assert response.status_code == 200, "Response is not 200"
+# assert not tags, "Not all tags deleted"

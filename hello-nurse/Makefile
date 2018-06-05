@@ -25,4 +25,4 @@ clean:
 build-linux:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) -o $(BINARY_UNIX) -v
 docker-build:
-	docker run --rm -it -v "$(GOPATH)":/go -w /go/src/github.com/hellupline/hello-nurse/server golang:latest vgo build -o "$(BINARY_UNIX)" -v
+	docker run --rm -it -w /go/src/github.com/hellupline/hello-nurse/hello-nurse -v "$(GOPATH)":/go golang:latest vgo build -o "$(BINARY_UNIX)" -v

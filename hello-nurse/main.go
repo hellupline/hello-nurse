@@ -1,4 +1,4 @@
-package main // import "github.com/hellupline/hello-nurse/hello-nurse-server"
+package main // import "github.com/hellupline/hello-nurse/hello-nurse"
 
 import (
 	"fmt"

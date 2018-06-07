@@ -3,6 +3,7 @@ package main // import "github.com/hellupline/hello-nurse/hello-nurse"
 import (
 	"fmt"
 	"net/http"
+	"sync"
 
 	"github.com/deckarep/golang-set"
 	"github.com/gin-gonic/gin"
@@ -40,6 +41,7 @@ var (
 	favoritesDB = FavoritesDB{}
 	tagsDB      = TagsDB{}
 	postsDB     = PostsDB{}
+	mux         = sync.Mutex{}
 )
 
 func init() {
@@ -78,6 +80,8 @@ func bindErrorResponse(err error) map[string][]string {
 		for _, v := range msg {
 			errors[v.Field()] = append(errors[v.Field()], v.Tag())
 		}
+	default:
+		errors["unknown"] = []string{fmt.Sprintln(err)}
 	}
 	return errors
 

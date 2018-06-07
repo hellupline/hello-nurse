@@ -23,6 +23,8 @@ func databasePostsQuery(query interface{}) []Post {
 }
 
 func databasePostCreate(post Post) {
+	mux.Lock()
+	defer mux.Unlock()
 	for _, tagName := range post.Tags {
 		tag, ok := tagsDB[tagName]
 		if !ok {
@@ -40,6 +42,8 @@ func databasePostRead(key string) (Post, bool) {
 }
 
 func databasePostDelete(key string) {
+	mux.Lock()
+	defer mux.Unlock()
 	if post, ok := databasePostRead(key); ok {
 		// remove post from tags
 		for _, tagName := range post.Tags {

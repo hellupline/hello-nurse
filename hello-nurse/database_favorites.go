@@ -9,6 +9,8 @@ func databaseFavoritesQuery() []Favorite {
 }
 
 func databaseFavoriteCreate(favorite Favorite) {
+	mux.Lock()
+	defer mux.Unlock()
 	favoritesDB[favorite.Name] = favorite
 }
 
@@ -18,5 +20,7 @@ func databaseFavoriteRead(key string) (Favorite, bool) {
 }
 
 func databaseFavoriteDelete(key string) {
+	mux.Lock()
+	defer mux.Unlock()
 	delete(favoritesDB, key)
 }

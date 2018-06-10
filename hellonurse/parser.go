@@ -1,4 +1,4 @@
-package main
+package hellonurse
 
 import (
 	"github.com/deckarep/golang-set"

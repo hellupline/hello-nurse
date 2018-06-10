@@ -2,13 +2,14 @@ package main // import "github.com/hellupline/hello-nurse/hello-nurse"
 
 import (
 	"fmt"
-	// "net/http"
+	"net/http"
 	"sync"
 
 	"github.com/deckarep/golang-set"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
-	// "google.golang.org/appengine"
+
+	"google.golang.org/appengine"
 )
 
 type (
@@ -46,9 +47,9 @@ var (
 	}
 )
 
-func main() {
+func init() {
 	router := gin.Default()
-	// http.Handle("/", router)
+	http.Handle("/", router)
 
 	v1Group := router.Group("/v1")
 
@@ -68,14 +69,12 @@ func main() {
 	postsGroup.DELETE("/:key", httpHandlePostDelete)
 	postsGroup.GET("", httpHandlePostIndex)
 	postsGroup.POST("", httpHandlePostCreate)
-
-	router.Run()
 }
 
-// func main() {
-// 	appengine.Main()
-// 	fmt.Println("")
-// }
+func main() {
+	appengine.Main()
+	fmt.Println("")
+}
 
 func bindErrorResponse(err error) map[string][]string {
 	errors := make(map[string][]string)

@@ -8,32 +8,30 @@ import (
 )
 
 func httpHandleUploadDatabase(c *gin.Context) {
-	data := Data{}
+	var data Database
 	if err := gob.NewDecoder(c.Request.Body).Decode(&data); err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{
 			"errors": []string{err.Error()},
 		})
 		return
 	}
-	favoritesDB = *data.FavoritesDB
-	tagsDB = *data.TagsDB
-	postsDB = *data.PostsDB
+
+	database.RLock()
+	database.Favorites = data.Favorites
+	database.Tags = data.Tags
+	database.Posts = data.Posts
+	database.RUnlock()
 
 	c.JSON(http.StatusOK, gin.H{"result": "success"})
 }
 
 func httpHandleDownloadDatabase(c *gin.Context) {
-	_ = gob.NewEncoder(c.Writer).Encode(Data{
-		&favoritesDB,
-		&tagsDB,
-		&postsDB,
-	})
+	database.RLock()
+	_ = gob.NewEncoder(c.Writer).Encode(database)
+	database.RUnlock()
 }
 
 func httpHandleTagsIndex(c *gin.Context) {
-	tagNames := make([]string, 0, len(tagsDB))
-	for key := range tagsDB {
-		tagNames = append(tagNames, key)
-	}
+	tagNames := databaseTagsQuery()
 	c.JSON(http.StatusOK, gin.H{"tags": tagNames})
 }

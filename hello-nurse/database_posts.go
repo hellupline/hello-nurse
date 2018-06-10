@@ -6,15 +6,17 @@ import (
 
 func databasePostsQuery(query interface{}) []Post {
 	posts := make([]Post, 0)
+	database.RLock()
+	defer database.RUnlock()
 	if query != nil {
 		keys := parseQuery(query)
 		for postKey := range keys.Iter() {
-			if post, ok := postsDB[postKey.(string)]; ok {
+			if post, ok := database.Posts[postKey.(string)]; ok {
 				posts = append(posts, post)
 			}
 		}
 	} else {
-		for _, post := range postsDB {
+		for _, post := range database.Posts {
 			posts = append(posts, post)
 		}
 	}
@@ -23,39 +25,42 @@ func databasePostsQuery(query interface{}) []Post {
 }
 
 func databasePostCreate(post Post) {
-	mux.Lock()
-	defer mux.Unlock()
+	database.Lock()
+	defer database.Unlock()
 	for _, tagName := range post.Tags {
-		tag, ok := tagsDB[tagName]
+		tag, ok := database.Tags[tagName]
 		if !ok {
-			tag = mapset.NewSet()
-			tagsDB[tagName] = tag
+			// using "unsafe" because database already has a lock
+			tag = mapset.NewThreadUnsafeSet()
+			database.Tags[tagName] = tag
 		}
 		tag.Add(post.ID)
 	}
-	postsDB[post.ID] = post
+	database.Posts[post.ID] = post
 }
 
 func databasePostRead(key string) (Post, bool) {
-	post, ok := postsDB[key]
+	database.RLock()
+	defer database.RUnlock()
+	post, ok := database.Posts[key]
 	return post, ok
 }
 
 func databasePostDelete(key string) {
-	mux.Lock()
-	defer mux.Unlock()
-	if post, ok := databasePostRead(key); ok {
+	database.Lock()
+	defer database.Unlock()
+	if post, ok := database.Posts[key]; ok {
 		// remove post from tags
 		for _, tagName := range post.Tags {
-			tag := tagsDB[tagName]
+			tag := database.Tags[tagName]
 			tag.Remove(post.ID)
 
 			// if tag is empty, delete it
 			if tag.Cardinality() == 0 {
-				delete(tagsDB, tagName)
+				delete(database.Tags, tagName)
 			}
 		}
 
-		delete(postsDB, key)
+		delete(database.Posts, key)
 	}
 }

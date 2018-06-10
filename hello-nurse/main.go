@@ -2,14 +2,13 @@ package main // import "github.com/hellupline/hello-nurse/hello-nurse"
 
 import (
 	"fmt"
-	"net/http"
+	// "net/http"
 	"sync"
 
 	"github.com/deckarep/golang-set"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
-
-	"google.golang.org/appengine"
+	// "google.golang.org/appengine"
 )
 
 type (
@@ -30,23 +29,26 @@ type (
 		Value     string   `json:"value" binding:"required"`
 	}
 
-	Data struct {
-		*FavoritesDB
-		*TagsDB
-		*PostsDB
+	Database struct {
+		Favorites FavoritesDB
+		Tags      TagsDB
+		Posts     PostsDB
+
+		sync.RWMutex
 	}
 )
 
 var (
-	favoritesDB = FavoritesDB{}
-	tagsDB      = TagsDB{}
-	postsDB     = PostsDB{}
-	mux         = sync.Mutex{}
+	database = Database{
+		Favorites: FavoritesDB{},
+		Tags:      TagsDB{},
+		Posts:     PostsDB{},
+	}
 )
 
-func init() {
+func main() {
 	router := gin.Default()
-	http.Handle("/", router)
+	// http.Handle("/", router)
 
 	v1Group := router.Group("/v1")
 
@@ -66,12 +68,14 @@ func init() {
 	postsGroup.DELETE("/:key", httpHandlePostDelete)
 	postsGroup.GET("", httpHandlePostIndex)
 	postsGroup.POST("", httpHandlePostCreate)
+
+	router.Run()
 }
 
-func main() {
-	appengine.Main()
-	fmt.Println("")
-}
+// func main() {
+// 	appengine.Main()
+// 	fmt.Println("")
+// }
 
 func bindErrorResponse(err error) map[string][]string {
 	errors := make(map[string][]string)

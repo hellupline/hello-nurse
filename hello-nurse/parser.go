@@ -32,12 +32,14 @@ func parseQuery(queryRaw interface{}) mapset.Set {
 		return items
 
 	case string:
-		if tag, ok := tagsDB[queryRaw.(string)]; ok {
+		if tag, ok := databaseTagRead(queryRaw.(string)); ok {
 			return tag
 		}
-		return mapset.NewSet()
+		// using "unsafe" because database already has a lock
+		return mapset.NewThreadUnsafeSet()
 	}
-	return mapset.NewSet()
+	// using "unsafe" because database already has a lock
+	return mapset.NewThreadUnsafeSet()
 }
 
 func keysIntersect(keys ...interface{}) mapset.Set {

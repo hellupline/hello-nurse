@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"sort"
 
 	"github.com/gin-gonic/gin"
 )
@@ -14,6 +15,9 @@ func httpHandlePostIndex(c *gin.Context) {
 	json.Unmarshal([]byte(queryRaw), &query)
 
 	posts := databasePostsQuery(query)
+	sort.Slice(posts, func(i, j int) bool {
+		return posts[i].ID < posts[j].ID
+	})
 	c.JSON(http.StatusOK, gin.H{"posts": posts})
 }
 

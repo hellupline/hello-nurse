@@ -2,25 +2,29 @@ package main
 
 func databaseFavoritesQuery() []Favorite {
 	favorites := make([]Favorite, 0)
-	for _, favorite := range favoritesDB {
+	database.RLock()
+	defer database.RUnlock()
+	for _, favorite := range database.Favorites {
 		favorites = append(favorites, favorite)
 	}
 	return favorites
 }
 
 func databaseFavoriteCreate(favorite Favorite) {
-	mux.Lock()
-	defer mux.Unlock()
-	favoritesDB[favorite.Name] = favorite
+	database.Lock()
+	defer database.Unlock()
+	database.Favorites[favorite.Name] = favorite
 }
 
 func databaseFavoriteRead(key string) (Favorite, bool) {
-	favorite, ok := favoritesDB[key]
+	database.RLock()
+	defer database.RUnlock()
+	favorite, ok := database.Favorites[key]
 	return favorite, ok
 }
 
 func databaseFavoriteDelete(key string) {
-	mux.Lock()
-	defer mux.Unlock()
-	delete(favoritesDB, key)
+	database.Lock()
+	defer database.Unlock()
+	delete(database.Favorites, key)
 }

@@ -80,17 +80,17 @@ def test_posts():
             "DELETE", f"{SERVER_URL}/posts/{favorite['id']}")
         assert response.status_code == 200, "Response is not 200"
 
-    # assert all posts deleted
-    response = session.request("GET", f"{SERVER_URL}/posts")
-    posts = response.json()["posts"]
-    assert response.status_code == 200, "Response is not 200"
-    assert not posts, "Not all posts deleted"
-
     # assert all tags deleted
     response = session.request("GET", f"{SERVER_URL}/tags")
     tags = response.json()["tags"]
     assert response.status_code == 200, "Response is not 200"
     assert not tags, "Not all tags deleted"
+
+    # assert all posts deleted
+    response = session.request("GET", f"{SERVER_URL}/posts")
+    posts = response.json()["posts"]
+    assert response.status_code == 200, "Response is not 200"
+    assert not posts, "Not all posts deleted"
 
 
 if __name__ == "__main__":

@@ -9,10 +9,9 @@ BINARY_UNIX=$(BINARY_NAME)_unix
 all: build
 
 build:
-	$(GOBUILD) -o $(BINARY_NAME) -v ./...
+	$(GOBUILD) -o $(BINARY_NAME) -v ./
 run: build
 	./$(BINARY_NAME)
-
 test:
 	$(GOTEST) -v ./...
 clean:
@@ -23,6 +22,6 @@ clean:
 
 # Cross compilation
 build-linux:
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) -o $(BINARY_UNIX) -v
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) -o $(BINARY_UNIX) -v ./
 docker-build:
-	docker run --rm -it -w /go/src/github.com/hellupline/hello-nurse/hello-nurse -v "$(GOPATH)":/go golang:latest vgo build -o "$(BINARY_UNIX)" -v
+	docker run --rm -it -w /go/src/github.com/hellupline/hello-nurse -v "$(GOPATH)":/go golang:latest "$(GOBUILD)" -o "$(BINARY_UNIX)" -v ./

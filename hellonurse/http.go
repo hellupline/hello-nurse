@@ -1,4 +1,4 @@
-package hellonurse
+package main
 
 import (
 	"encoding/gob"

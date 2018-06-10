@@ -7,4 +7,6 @@ require (
 	github.com/go-playground/universal-translator v0.16.0
 	github.com/go-playground/validator v0.0.0-20180514145739-f28cb45dc0f0
 	google.golang.org/appengine v1.0.0
+	gopkg.in/check.v1 v1.0.0-20161208181325-20d25e280405
+	gopkg.in/go-playground/assert.v1 v1.2.1
 )

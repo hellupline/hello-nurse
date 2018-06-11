@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/deckarep/golang-set"
 	"github.com/go-playground/validator"
 )
 
@@ -15,7 +14,7 @@ type (
 	}
 
 	TagsDB map[string]Tag
-	Tag    mapset.Set
+	Tag    MapSet
 
 	PostsDB map[string]Post
 	Post    struct {
@@ -87,7 +86,7 @@ func databaseFavoriteDelete(key string) {
 }
 
 func databaseTagsQuery() []string {
-	keys := make([]string, len(database.Tags))
+	keys := make([]string, 0, len(database.Tags))
 	database.RLock()
 	defer database.RUnlock()
 	for key := range database.Tags {
@@ -110,7 +109,7 @@ func databasePostsQuery(query interface{}) []Post {
 	if query != nil {
 		keys := parseQuery(query)
 		for postKey := range keys.Iter() {
-			if post, ok := database.Posts[postKey.(string)]; ok {
+			if post, ok := database.Posts[postKey]; ok {
 				posts = append(posts, post)
 			}
 		}
@@ -129,11 +128,10 @@ func databasePostCreate(post Post) {
 	for _, tagName := range post.Tags {
 		tag, ok := database.Tags[tagName]
 		if !ok {
-			// using "unsafe" because database already has a lock
-			tag = mapset.NewThreadUnsafeSet()
+			tag = Tag{}
 			database.Tags[tagName] = tag
 		}
-		tag.Add(post.ID)
+		MapSet(tag).Add(post.ID)
 	}
 	database.Posts[post.ID] = post
 }
@@ -152,10 +150,10 @@ func databasePostDelete(key string) {
 		// remove post from tags
 		for _, tagName := range post.Tags {
 			tag := database.Tags[tagName]
-			tag.Remove(post.ID)
+			MapSet(tag).Remove(post.ID)
 
 			// if tag is empty, delete it
-			if tag.Cardinality() == 0 {
+			if len(tag) == 0 {
 				delete(database.Tags, tagName)
 			}
 		}

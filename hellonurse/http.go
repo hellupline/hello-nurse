@@ -9,8 +9,17 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type DatabaseDump struct {
+	Favorites FavoritesDB `json:"favorites"`
+	Tags      TagsDB      `json:"tags"`
+	Posts     PostsDB     `json:"posts"`
+}
+
 func HttpHandleUploadDatabase(c *gin.Context) {
-	var data Database
+	var data DatabaseDump
+	database.Lock()
+	defer database.Unlock()
+
 	if err := gob.NewDecoder(c.Request.Body).Decode(&data); err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{
 			"errors": []string{err.Error()},
@@ -18,19 +27,22 @@ func HttpHandleUploadDatabase(c *gin.Context) {
 		return
 	}
 
-	database.RLock()
 	database.Favorites = data.Favorites
 	database.Tags = data.Tags
 	database.Posts = data.Posts
-	database.RUnlock()
 
 	c.JSON(http.StatusOK, gin.H{"result": "success"})
 }
 
 func HttpHandleDownloadDatabase(c *gin.Context) {
 	database.RLock()
-	_ = gob.NewEncoder(c.Writer).Encode(database)
-	database.RUnlock()
+	defer database.RUnlock()
+
+	_ = gob.NewEncoder(c.Writer).Encode(DatabaseDump{
+		Favorites: database.Favorites,
+		Tags:      database.Tags,
+		Posts:     database.Posts,
+	})
 }
 
 func HttpHandleFavoriteIndex(c *gin.Context) {

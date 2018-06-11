@@ -1,14 +1,10 @@
 package hellonurse
 
-import (
-	"github.com/deckarep/golang-set"
-)
-
-func parseQuery(queryRaw interface{}) mapset.Set {
+func parseQuery(queryRaw interface{}) MapSet {
 	switch queryRaw.(type) {
 	case map[string]interface{}:
 		queryMap := queryRaw.(map[string]interface{})
-		var items mapset.Set
+		var items MapSet
 
 		andKeys, andOk := queryMap["and"]
 		orKeys, orOk := queryMap["or"]
@@ -33,16 +29,19 @@ func parseQuery(queryRaw interface{}) mapset.Set {
 
 	case string:
 		if tag, ok := databaseTagRead(queryRaw.(string)); ok {
-			return tag
+			return MapSet(tag)
 		}
 		// using "unsafe" because database already has a lock
-		return mapset.NewThreadUnsafeSet()
+		return MapSet{}
 	}
 	// using "unsafe" because database already has a lock
-	return mapset.NewThreadUnsafeSet()
+	return MapSet{}
 }
 
-func keysIntersect(keys ...interface{}) mapset.Set {
+func keysIntersect(keys ...interface{}) MapSet {
+	if len(keys) == 0 {
+		return NewMapSet()
+	}
 	first, others := keys[0], keys[1:]
 	result := parseQuery(first)
 	for _, key := range others {
@@ -51,7 +50,10 @@ func keysIntersect(keys ...interface{}) mapset.Set {
 	return result
 }
 
-func keysUnion(keys ...interface{}) mapset.Set {
+func keysUnion(keys ...interface{}) MapSet {
+	if len(keys) == 0 {
+		return NewMapSet()
+	}
 	first, others := keys[0], keys[1:]
 	result := parseQuery(first)
 	for _, key := range others {

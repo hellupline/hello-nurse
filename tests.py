@@ -94,4 +94,5 @@ def test_posts():
 
 
 if __name__ == "__main__":
+    test_favorites()
     test_posts()

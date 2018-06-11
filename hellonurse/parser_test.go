@@ -3,8 +3,6 @@ package hellonurse
 import (
 	"fmt"
 	"testing"
-
-	"github.com/deckarep/golang-set"
 )
 
 const ErrorMismatch = `Result mismatch
@@ -35,7 +33,7 @@ func init() {
 }
 
 func TestParseSimpleAndNot(t *testing.T) {
-	expect := mapset.NewThreadUnsafeSetFromSlice([]interface{}{
+	expect := NewMapSetFromSlice([]string{
 		"number:006",
 		"number:018",
 		"number:030",
@@ -62,7 +60,7 @@ func TestParseSimpleAndNot(t *testing.T) {
 }
 
 func TestParseSimpleAndOr(t *testing.T) {
-	expect := mapset.NewThreadUnsafeSetFromSlice([]interface{}{
+	expect := NewMapSetFromSlice([]string{
 		"number:012",
 		"number:024",
 		"number:036",
@@ -89,7 +87,7 @@ func TestParseSimpleAndOr(t *testing.T) {
 }
 
 func TestParseSimpleAnd(t *testing.T) {
-	expect := mapset.NewThreadUnsafeSetFromSlice([]interface{}{
+	expect := NewMapSetFromSlice([]string{
 		"number:010",
 		"number:020",
 		"number:030",
@@ -117,7 +115,7 @@ func TestParseSimpleAnd(t *testing.T) {
 }
 
 func TestParseSimpleOr(t *testing.T) {
-	expect := mapset.NewThreadUnsafeSetFromSlice([]interface{}{
+	expect := NewMapSetFromSlice([]string{
 		"number:002",
 		"number:004",
 		"number:005",
@@ -195,7 +193,7 @@ func TestParseSimpleOr(t *testing.T) {
 }
 
 func TestParseSimpleString(t *testing.T) {
-	expect := mapset.NewThreadUnsafeSetFromSlice([]interface{}{
+	expect := NewMapSetFromSlice([]string{
 		"number:010",
 		"number:020",
 		"number:030",

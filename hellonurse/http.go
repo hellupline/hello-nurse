@@ -15,7 +15,37 @@ type DatabaseDump struct {
 	Posts     PostsDB     `json:"posts"`
 }
 
-func HttpHandleUploadDatabase(c *gin.Context) {
+func HttpHandleUploadDatabaseJSON(c *gin.Context) {
+	var data DatabaseDump
+	database.Lock()
+	defer database.Unlock()
+
+	if err := json.NewDecoder(c.Request.Body).Decode(&data); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{
+			"errors": []string{err.Error()},
+		})
+		return
+	}
+
+	database.Favorites = data.Favorites
+	database.Tags = data.Tags
+	database.Posts = data.Posts
+
+	c.JSON(http.StatusOK, gin.H{"result": "success"})
+}
+
+func HttpHandleDownloadDatabaseJSON(c *gin.Context) {
+	database.RLock()
+	defer database.RUnlock()
+
+	_ = json.NewEncoder(c.Writer).Encode(DatabaseDump{
+		Favorites: database.Favorites,
+		Tags:      database.Tags,
+		Posts:     database.Posts,
+	})
+}
+
+func HttpHandleUploadDatabaseGOB(c *gin.Context) {
 	var data DatabaseDump
 	database.Lock()
 	defer database.Unlock()
@@ -34,7 +64,7 @@ func HttpHandleUploadDatabase(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"result": "success"})
 }
 
-func HttpHandleDownloadDatabase(c *gin.Context) {
+func HttpHandleDownloadDatabaseGOB(c *gin.Context) {
 	database.RLock()
 	defer database.RUnlock()
 

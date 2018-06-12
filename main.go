@@ -7,20 +7,26 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-
-	"google.golang.org/appengine"
 )
 
-func init() {
+func main() {
 	router := gin.Default()
 	router.Use(cors.Default())
-	http.Handle("/", router)
+
+	v1Group := router.Group("/v1")
 
 	router.GET("/", func(c *gin.Context) {
 		c.String(http.StatusOK, "hello")
 	})
 
-	v1Group := router.Group("/v1")
+	datasetGroup := v1Group.Group("/dataset")
+	{
+		datasetGroup.GET("/download/json", nurse.HttpHandleDownloadDatabaseJSON)
+		datasetGroup.POST("/upload/json", nurse.HttpHandleUploadDatabaseJSON)
+
+		datasetGroup.GET("/download/gob", nurse.HttpHandleDownloadDatabase)
+		datasetGroup.POST("/upload/gob", nurse.HttpHandleUploadDatabase)
+	}
 
 	favoritesGroup := v1Group.Group("/favorites")
 	{
@@ -28,6 +34,11 @@ func init() {
 		favoritesGroup.DELETE("/:key", nurse.HttpHandleFavoriteDelete)
 		favoritesGroup.GET("", nurse.HttpHandleFavoriteIndex)
 		favoritesGroup.POST("", nurse.HttpHandleFavoriteCreate)
+	}
+
+	tagsGroup := v1Group.Group("/tags")
+	{
+		tagsGroup.GET("", nurse.HttpHandleTagsIndex)
 	}
 
 	postsGroup := v1Group.Group("/posts")
@@ -38,12 +49,5 @@ func init() {
 		postsGroup.POST("", nurse.HttpHandlePostCreate)
 	}
 
-	v1Group.GET("/tags", nurse.HttpHandleTagsIndex)
-
-	v1Group.GET("/download", nurse.HttpHandleDownloadDatabase)
-	v1Group.POST("/upload", nurse.HttpHandleUploadDatabase)
-}
-
-func main() {
-	appengine.Main()
+	router.Run()
 }

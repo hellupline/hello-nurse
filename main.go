@@ -5,6 +5,7 @@ import (
 
 	nurse "github.com/hellupline/hello-nurse/hellonurse"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
 	"google.golang.org/appengine"
@@ -12,6 +13,7 @@ import (
 
 func init() {
 	router := gin.Default()
+	router.Use(cors.Default())
 	http.Handle("/", router)
 
 	router.GET("/", func(c *gin.Context) {

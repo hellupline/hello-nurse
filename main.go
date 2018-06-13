@@ -19,15 +19,6 @@ func main() {
 		c.String(http.StatusOK, "hello")
 	})
 
-	datasetGroup := v1Group.Group("/dataset")
-	{
-		datasetGroup.GET("/download/json", nurse.HttpHandleDownloadDatabaseJSON)
-		datasetGroup.POST("/upload/json", nurse.HttpHandleUploadDatabaseJSON)
-
-		datasetGroup.GET("/download/gob", nurse.HttpHandleDownloadDatabase)
-		datasetGroup.POST("/upload/gob", nurse.HttpHandleUploadDatabase)
-	}
-
 	favoritesGroup := v1Group.Group("/favorites")
 	{
 		favoritesGroup.GET("/:key", nurse.HttpHandleFavoriteRead)
@@ -47,6 +38,15 @@ func main() {
 		postsGroup.DELETE("/:key", nurse.HttpHandlePostDelete)
 		postsGroup.GET("", nurse.HttpHandlePostIndex)
 		postsGroup.POST("", nurse.HttpHandlePostCreate)
+	}
+
+	datasetGroup := v1Group.Group("/dataset")
+	{
+		datasetGroup.GET("/download/json", nurse.HttpHandleDownloadDatabaseJSON)
+		datasetGroup.POST("/upload/json", nurse.HttpHandleUploadDatabaseJSON)
+
+		datasetGroup.GET("/download/gob", nurse.HttpHandleDownloadDatabaseGOB)
+		datasetGroup.POST("/upload/gob", nurse.HttpHandleUploadDatabaseGOB)
 	}
 
 	router.Run()

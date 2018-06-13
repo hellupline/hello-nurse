@@ -5,6 +5,8 @@ import requests
 
 SERVER_URL = "http://localhost:8080/v1"
 
+SHOULD_DELETE = False
+
 MAX_FAVORITES = 100
 MAX_POSTS = 100
 
@@ -28,6 +30,8 @@ def test_favorites():
     ), f"List size mismatch, found: {len(favorites)}, expect: {MAX_FAVORITES}"
 
     # delete favorites
+    if not SHOULD_DELETE:
+        return
     for favorite in favorites:
         response = session.request(
             "DELETE", f"{SERVER_URL}/favorites/{favorite['name']}"
@@ -75,6 +79,8 @@ def test_posts():
         assert f"y:{y:04}" in tags, f"Tag 'y:{y:04}' not created"
 
     # delete posts
+    if not SHOULD_DELETE:
+        return
     for favorite in posts:
         response = session.request(
             "DELETE", f"{SERVER_URL}/posts/{favorite['id']}")

@@ -77,6 +77,9 @@ func HttpHandleDownloadDatabaseGOB(c *gin.Context) {
 
 func HttpHandleFavoriteIndex(c *gin.Context) {
 	favorites := databaseFavoritesQuery()
+	sort.Slice(favorites, func(i, j int) bool {
+		return favorites[i].Name < favorites[j].Name
+	})
 	c.JSON(http.StatusOK, gin.H{"favorites": favorites})
 }
 
@@ -110,6 +113,9 @@ func HttpHandleFavoriteDelete(c *gin.Context) {
 
 func HttpHandleTagsIndex(c *gin.Context) {
 	tagNames := databaseTagsQuery()
+	sort.Slice(tagNames, func(i, j int) bool {
+		return tagNames[i] < tagNames[j]
+	})
 	c.JSON(http.StatusOK, gin.H{"tags": tagNames})
 }
 

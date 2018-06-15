@@ -3,10 +3,13 @@ package nursetags
 import (
 	"encoding/gob"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"sort"
 
 	"github.com/gin-gonic/gin"
+
+	"github.com/go-playground/validator"
 )
 
 type DatabaseDump struct {
@@ -158,4 +161,18 @@ func HttpHandlePostRead(c *gin.Context) {
 func HttpHandlePostDelete(c *gin.Context) {
 	databasePostDelete(c.Param("key"))
 	c.JSON(http.StatusOK, gin.H{"result": "success"})
+}
+
+func bindErrorResponse(err error) map[string][]string {
+	errors := make(map[string][]string)
+	switch msg := err.(type) {
+	case validator.ValidationErrors:
+		for _, v := range msg {
+			errors[v.Field()] = append(errors[v.Field()], v.Tag())
+		}
+	default:
+		errors["unknown"] = []string{fmt.Sprintln(err)}
+	}
+	return errors
+
 }

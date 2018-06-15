@@ -1,10 +1,7 @@
 package nursetags
 
 import (
-	"fmt"
 	"sync"
-
-	"github.com/go-playground/validator"
 )
 
 type (
@@ -41,20 +38,6 @@ var (
 		Posts:     PostsDB{},
 	}
 )
-
-func bindErrorResponse(err error) map[string][]string {
-	errors := make(map[string][]string)
-	switch msg := err.(type) {
-	case validator.ValidationErrors:
-		for _, v := range msg {
-			errors[v.Field()] = append(errors[v.Field()], v.Tag())
-		}
-	default:
-		errors["unknown"] = []string{fmt.Sprintln(err)}
-	}
-	return errors
-
-}
 
 func databaseFavoritesQuery() []Favorite {
 	favorites := make([]Favorite, 0)

@@ -1,4 +1,4 @@
-package hellonurse
+package nursetags
 
 type MapSet map[string]struct{}
 

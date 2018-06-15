@@ -1,4 +1,4 @@
-package hellonurse
+package nursetags
 
 func parseQuery(queryRaw interface{}) MapSet {
 	switch queryRaw.(type) {
@@ -31,10 +31,8 @@ func parseQuery(queryRaw interface{}) MapSet {
 		if tag, ok := databaseTagRead(queryRaw.(string)); ok {
 			return MapSet(tag)
 		}
-		// using "unsafe" because database already has a lock
 		return MapSet{}
 	}
-	// using "unsafe" because database already has a lock
 	return MapSet{}
 }
 

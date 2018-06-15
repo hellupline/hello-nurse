@@ -1,4 +1,4 @@
-package hellonurse
+package nursetags
 
 import (
 	"testing"

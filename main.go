@@ -3,7 +3,7 @@ package main // import "github.com/hellupline/hello-nurse"
 import (
 	"net/http"
 
-	nurse "github.com/hellupline/hello-nurse/hellonurse"
+	"github.com/hellupline/hello-nurse/nursetags"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -21,32 +21,32 @@ func main() {
 
 	favoritesGroup := v1Group.Group("/favorites")
 	{
-		favoritesGroup.GET("/:key", nurse.HttpHandleFavoriteRead)
-		favoritesGroup.DELETE("/:key", nurse.HttpHandleFavoriteDelete)
-		favoritesGroup.GET("", nurse.HttpHandleFavoriteIndex)
-		favoritesGroup.POST("", nurse.HttpHandleFavoriteCreate)
+		favoritesGroup.GET("/:key", nursetags.HttpHandleFavoriteRead)
+		favoritesGroup.DELETE("/:key", nursetags.HttpHandleFavoriteDelete)
+		favoritesGroup.GET("", nursetags.HttpHandleFavoriteIndex)
+		favoritesGroup.POST("", nursetags.HttpHandleFavoriteCreate)
 	}
 
 	tagsGroup := v1Group.Group("/tags")
 	{
-		tagsGroup.GET("", nurse.HttpHandleTagsIndex)
+		tagsGroup.GET("", nursetags.HttpHandleTagsIndex)
 	}
 
 	postsGroup := v1Group.Group("/posts")
 	{
-		postsGroup.GET("/:key", nurse.HttpHandlePostRead)
-		postsGroup.DELETE("/:key", nurse.HttpHandlePostDelete)
-		postsGroup.GET("", nurse.HttpHandlePostIndex)
-		postsGroup.POST("", nurse.HttpHandlePostCreate)
+		postsGroup.GET("/:key", nursetags.HttpHandlePostRead)
+		postsGroup.DELETE("/:key", nursetags.HttpHandlePostDelete)
+		postsGroup.GET("", nursetags.HttpHandlePostIndex)
+		postsGroup.POST("", nursetags.HttpHandlePostCreate)
 	}
 
 	datasetGroup := v1Group.Group("/dataset")
 	{
-		datasetGroup.GET("/download/json", nurse.HttpHandleDownloadDatabaseJSON)
-		datasetGroup.POST("/upload/json", nurse.HttpHandleUploadDatabaseJSON)
+		datasetGroup.GET("/download/json", nursetags.HttpHandleDownloadDatabaseJSON)
+		datasetGroup.POST("/upload/json", nursetags.HttpHandleUploadDatabaseJSON)
 
-		datasetGroup.GET("/download/gob", nurse.HttpHandleDownloadDatabaseGOB)
-		datasetGroup.POST("/upload/gob", nurse.HttpHandleUploadDatabaseGOB)
+		datasetGroup.GET("/download/gob", nursetags.HttpHandleDownloadDatabaseGOB)
+		datasetGroup.POST("/upload/gob", nursetags.HttpHandleUploadDatabaseGOB)
 	}
 
 	router.Run()

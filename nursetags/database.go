@@ -85,24 +85,31 @@ func databaseTagRead(key string) (Tag, bool) {
 	return tag, ok
 }
 
-func databasePostsQuery(query interface{}) []Post {
-	posts := make([]Post, 0)
+func databasePostsQuery(query string) []Post {
 	database.RLock()
 	defer database.RUnlock()
-	if query != nil {
-		keys := parseQuery(query)
-		for postKey := range keys.Iter() {
-			if post, ok := database.Posts[postKey]; ok {
-				posts = append(posts, post)
-			}
-		}
-	} else {
+
+	posts := make([]Post, 0)
+
+	if len(query) == 0 {
 		for _, post := range database.Posts {
 			posts = append(posts, post)
 		}
+		return posts
 	}
 
+	keys, err := parseExpr(query)
+	if err != nil {
+		return posts
+	}
+
+	for postKey := range keys.Iter() {
+		if post, ok := database.Posts[postKey]; ok {
+			posts = append(posts, post)
+		}
+	}
 	return posts
+
 }
 
 func databasePostCreate(post Post) {

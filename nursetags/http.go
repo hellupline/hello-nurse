@@ -123,12 +123,8 @@ func HttpHandleTagsIndex(c *gin.Context) {
 }
 
 func HttpHandlePostIndex(c *gin.Context) {
-	queryRaw := c.Query("q")
+	posts := databasePostsQuery(c.Query("q"))
 
-	var query interface{}
-	json.Unmarshal([]byte(queryRaw), &query)
-
-	posts := databasePostsQuery(query)
 	sort.Slice(posts, func(i, j int) bool {
 		return posts[i].ID < posts[j].ID
 	})

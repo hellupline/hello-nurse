@@ -1,20 +1,20 @@
 package nursetags
 
-type MapSet map[string]struct{}
+type Set map[string]struct{}
 
-func NewMapSet(values ...string) MapSet {
-	set := make(MapSet)
+func NewSet(values ...string) Set {
+	set := make(Set)
 	for _, value := range values {
 		set[value] = struct{}{}
 	}
 	return set
 }
 
-func NewMapSetFromSlice(values []string) MapSet {
-	return NewMapSet(values...)
+func NewSetFromSlice(values []string) Set {
+	return NewSet(values...)
 }
 
-func (set MapSet) Iter() <-chan string {
+func (set Set) Iter() <-chan string {
 	ch := make(chan string)
 	go func() {
 		for elem := range set {
@@ -26,7 +26,7 @@ func (set MapSet) Iter() <-chan string {
 	return ch
 }
 
-func (set MapSet) ToSlice() []string {
+func (set Set) ToSlice() []string {
 	keys := make([]string, 0, len(set))
 	for elem := range set {
 		keys = append(keys, elem)
@@ -35,8 +35,8 @@ func (set MapSet) ToSlice() []string {
 	return keys
 }
 
-func (set MapSet) Intersect(other MapSet) MapSet {
-	intersection := make(MapSet)
+func (set Set) Intersect(other Set) Set {
+	intersection := make(Set)
 	// loop over smaller set
 	if len(set) < len(other) {
 		for elem := range set {
@@ -54,8 +54,8 @@ func (set MapSet) Intersect(other MapSet) MapSet {
 	return intersection
 }
 
-func (set MapSet) Union(other MapSet) MapSet {
-	union := make(MapSet)
+func (set Set) Union(other Set) Set {
+	union := make(Set)
 
 	for elem := range set {
 		union.Add(elem)
@@ -66,8 +66,8 @@ func (set MapSet) Union(other MapSet) MapSet {
 	return union
 }
 
-func (set MapSet) Difference(other MapSet) MapSet {
-	difference := make(MapSet)
+func (set Set) Difference(other Set) Set {
+	difference := make(Set)
 	for elem := range set {
 		if !other.Contains(elem) {
 			difference.Add(elem)
@@ -76,13 +76,13 @@ func (set MapSet) Difference(other MapSet) MapSet {
 	return difference
 }
 
-func (set MapSet) SymmetricDifference(other MapSet) MapSet {
+func (set Set) SymmetricDifference(other Set) Set {
 	aDiff := set.Difference(other)
 	bDiff := other.Difference(set)
 	return aDiff.Union(bDiff)
 }
 
-func (set MapSet) Add(i string) bool {
+func (set Set) Add(i string) bool {
 	_, found := set[i]
 	if found {
 		return false
@@ -92,11 +92,11 @@ func (set MapSet) Add(i string) bool {
 	return true
 }
 
-func (set MapSet) Remove(i string) {
+func (set Set) Remove(i string) {
 	delete(set, i)
 }
 
-func (set MapSet) Contains(i ...string) bool {
+func (set Set) Contains(i ...string) bool {
 	for _, val := range i {
 		if _, ok := set[val]; !ok {
 			return false
@@ -105,7 +105,7 @@ func (set MapSet) Contains(i ...string) bool {
 	return true
 }
 
-func (set MapSet) Equal(other MapSet) bool {
+func (set Set) Equal(other Set) bool {
 	if len(set) != len(other) {
 		return false
 	}
@@ -117,7 +117,7 @@ func (set MapSet) Equal(other MapSet) bool {
 	return true
 }
 
-func (set MapSet) IsSubset(other MapSet) bool {
+func (set Set) IsSubset(other Set) bool {
 	for elem := range set {
 		if !other.Contains(elem) {
 			return false
@@ -126,14 +126,14 @@ func (set MapSet) IsSubset(other MapSet) bool {
 	return true
 }
 
-func (set MapSet) IsProperSubset(other MapSet) bool {
+func (set Set) IsProperSubset(other Set) bool {
 	return set.IsSubset(other) && !set.Equal(other)
 }
 
-func (set MapSet) IsSuperset(other MapSet) bool {
+func (set Set) IsSuperset(other Set) bool {
 	return other.IsSubset(set)
 }
 
-func (set MapSet) IsProperSuperset(other MapSet) bool {
+func (set Set) IsProperSuperset(other Set) bool {
 	return set.IsSuperset(other) && !set.Equal(other)
 }

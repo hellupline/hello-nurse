@@ -1,10 +1,10 @@
 package nursetags
 
-func parseQuery(queryRaw interface{}) MapSet {
+func parseQuery(queryRaw interface{}) Set {
 	switch queryRaw.(type) {
 	case map[string]interface{}:
 		queryMap := queryRaw.(map[string]interface{})
-		var items MapSet
+		var items Set
 
 		andKeys, andOk := queryMap["and"]
 		orKeys, orOk := queryMap["or"]
@@ -29,16 +29,16 @@ func parseQuery(queryRaw interface{}) MapSet {
 
 	case string:
 		if tag, ok := databaseTagRead(queryRaw.(string)); ok {
-			return MapSet(tag)
+			return Set(tag)
 		}
-		return MapSet{}
+		return Set{}
 	}
-	return MapSet{}
+	return Set{}
 }
 
-func keysIntersect(keys ...interface{}) MapSet {
+func keysIntersect(keys ...interface{}) Set {
 	if len(keys) == 0 {
-		return NewMapSet()
+		return NewSet()
 	}
 	first, others := keys[0], keys[1:]
 	result := parseQuery(first)
@@ -48,9 +48,9 @@ func keysIntersect(keys ...interface{}) MapSet {
 	return result
 }
 
-func keysUnion(keys ...interface{}) MapSet {
+func keysUnion(keys ...interface{}) Set {
 	if len(keys) == 0 {
-		return NewMapSet()
+		return NewSet()
 	}
 	first, others := keys[0], keys[1:]
 	result := parseQuery(first)

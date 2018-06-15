@@ -14,7 +14,7 @@ type (
 	}
 
 	TagsDB map[string]Tag
-	Tag    MapSet
+	Tag    Set
 
 	PostsDB map[string]Post
 	Post    struct {
@@ -131,7 +131,7 @@ func databasePostCreate(post Post) {
 			tag = Tag{}
 			database.Tags[tagName] = tag
 		}
-		MapSet(tag).Add(post.ID)
+		Set(tag).Add(post.ID)
 	}
 	database.Posts[post.ID] = post
 }
@@ -150,7 +150,7 @@ func databasePostDelete(key string) {
 		// remove post from tags
 		for _, tagName := range post.Tags {
 			tag := database.Tags[tagName]
-			MapSet(tag).Remove(post.ID)
+			Set(tag).Remove(post.ID)
 
 			// if tag is empty, delete it
 			if len(tag) == 0 {

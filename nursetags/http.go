@@ -2,7 +2,6 @@ package nursetags
 
 import (
 	"encoding/gob"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"sort"
@@ -13,39 +12,9 @@ import (
 )
 
 type DatabaseDump struct {
-	Favorites FavoritesDB `json:"favorites"`
-	Tags      TagsDB      `json:"tags"`
-	Posts     PostsDB     `json:"posts"`
-}
-
-func HttpHandleUploadDatabaseJSON(c *gin.Context) {
-	var data DatabaseDump
-	database.Lock()
-	defer database.Unlock()
-
-	if err := json.NewDecoder(c.Request.Body).Decode(&data); err != nil {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{
-			"errors": []string{err.Error()},
-		})
-		return
-	}
-
-	database.Favorites = data.Favorites
-	database.Tags = data.Tags
-	database.Posts = data.Posts
-
-	c.JSON(http.StatusOK, gin.H{"result": "success"})
-}
-
-func HttpHandleDownloadDatabaseJSON(c *gin.Context) {
-	database.RLock()
-	defer database.RUnlock()
-
-	_ = json.NewEncoder(c.Writer).Encode(DatabaseDump{
-		Favorites: database.Favorites,
-		Tags:      database.Tags,
-		Posts:     database.Posts,
-	})
+	Favorites FavoritesDB
+	Tags      TagsDB
+	Posts     PostsDB
 }
 
 func HttpHandleUploadDatabaseGOB(c *gin.Context) {
@@ -79,7 +48,7 @@ func HttpHandleDownloadDatabaseGOB(c *gin.Context) {
 }
 
 func HttpHandleFavoriteIndex(c *gin.Context) {
-	favorites := databaseFavoritesQuery()
+	favorites := DatabaseFavoritesQuery()
 	sort.Slice(favorites, func(i, j int) bool {
 		return favorites[i].Name < favorites[j].Name
 	})
@@ -96,12 +65,12 @@ func HttpHandleFavoriteCreate(c *gin.Context) {
 		return
 	}
 
-	databaseFavoriteCreate(favorite)
+	DatabaseFavoriteCreate(favorite)
 	c.JSON(http.StatusOK, gin.H{"result": "success"})
 }
 
 func HttpHandleFavoriteRead(c *gin.Context) {
-	favorite, ok := databaseFavoriteRead(c.Param("key"))
+	favorite, ok := DatabaseFavoriteRead(c.Param("key"))
 	if !ok {
 		c.String(http.StatusNotFound, "")
 		return
@@ -110,12 +79,12 @@ func HttpHandleFavoriteRead(c *gin.Context) {
 }
 
 func HttpHandleFavoriteDelete(c *gin.Context) {
-	databaseFavoriteDelete(c.Param("key"))
+	DatabaseFavoriteDelete(c.Param("key"))
 	c.JSON(http.StatusOK, gin.H{"result": "success"})
 }
 
 func HttpHandleTagsIndex(c *gin.Context) {
-	tagNames := databaseTagsQuery()
+	tagNames := DatabaseTagsQuery()
 	sort.Slice(tagNames, func(i, j int) bool {
 		return tagNames[i] < tagNames[j]
 	})
@@ -123,7 +92,7 @@ func HttpHandleTagsIndex(c *gin.Context) {
 }
 
 func HttpHandlePostIndex(c *gin.Context) {
-	posts := databasePostsQuery(c.Query("q"))
+	posts := DatabasePostsQuery(c.Query("q"))
 
 	sort.Slice(posts, func(i, j int) bool {
 		return posts[i].ID < posts[j].ID
@@ -141,13 +110,13 @@ func HttpHandlePostCreate(c *gin.Context) {
 		return
 	}
 
-	databasePostCreate(post)
+	DatabasePostCreate(post)
 	c.JSON(http.StatusOK, gin.H{"result": "success"})
 }
 
 func HttpHandlePostRead(c *gin.Context) {
 	key := PostKey{c.Param("namespace"), c.Param("key")}
-	post, ok := databasePostRead(key)
+	post, ok := DatabasePostRead(key)
 	if !ok {
 		c.String(http.StatusNotFound, "")
 		return
@@ -157,7 +126,7 @@ func HttpHandlePostRead(c *gin.Context) {
 
 func HttpHandlePostDelete(c *gin.Context) {
 	key := PostKey{c.Param("namespace"), c.Param("key")}
-	databasePostDelete(key)
+	DatabasePostDelete(key)
 	c.JSON(http.StatusOK, gin.H{"result": "success"})
 }
 
@@ -172,5 +141,4 @@ func bindErrorResponse(err error) map[string][]string {
 		errors["unknown"] = []string{fmt.Sprintln(err)}
 	}
 	return errors
-
 }

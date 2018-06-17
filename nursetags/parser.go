@@ -49,7 +49,7 @@ func evalParenExpr(t *ast.ParenExpr) Set {
 
 func evalBasicLit(t *ast.BasicLit) Set {
 	key := strings.Trim(t.Value, `"'`)
-	if tag, ok := databaseTagRead(key); ok {
+	if tag, ok := DatabaseTagRead(key); ok {
 		return Set(tag)
 	}
 	return Set{}
@@ -57,7 +57,7 @@ func evalBasicLit(t *ast.BasicLit) Set {
 
 func evalIdent(t *ast.Ident) Set {
 	key := t.Name
-	if tag, ok := databaseTagRead(key); ok {
+	if tag, ok := DatabaseTagRead(key); ok {
 		return Set(tag)
 	}
 	return Set{}

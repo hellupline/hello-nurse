@@ -42,9 +42,9 @@ func main() {
 
 	datasetGroup := v1Group.Group("/dataset")
 	{
-		datasetGroup.GET("/download/gob", nursetags.HttpHandleDownloadDatabaseGOB)
-		datasetGroup.POST("/upload/gob", nursetags.HttpHandleUploadDatabaseGOB)
+		datasetGroup.GET("/download/gob", nursetags.HttpHandleDownloadDatasetGOB)
+		datasetGroup.POST("/upload/gob", nursetags.HttpHandleUploadDatasetGOB)
 	}
 
-	router.Run()
+	_ = router.Run()
 }

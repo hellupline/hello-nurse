@@ -5,6 +5,14 @@ import (
 )
 
 type (
+	Database struct {
+		Favorites FavoritesDB
+		Tags      TagsDB
+		Posts     PostsDB
+
+		sync.RWMutex
+	}
+
 	FavoritesDB map[string]Favorite
 	Favorite    struct {
 		Name string `json:"name" binding:"required"`
@@ -13,21 +21,16 @@ type (
 	TagsDB map[string]Tag
 	Tag    Set
 
-	PostsDB map[string]Post
-	Post    struct {
-		Tags      []string `json:"tags" binding:"required"`
-		Namespace string   `json:"namespace" binding:"required"`
-		External  bool     `json:"external"`
-		ID        string   `json:"id" binding:"required"`
-		Value     string   `json:"value" binding:"required"`
+	PostsDB map[PostKey]PostData
+	PostKey struct {
+		Namespace string `json:"namespace" binding:"required"`
+		ID        string `json:"id" binding:"required"`
 	}
+	PostData struct {
+		PostKey
 
-	Database struct {
-		Favorites FavoritesDB
-		Tags      TagsDB
-		Posts     PostsDB
-
-		sync.RWMutex
+		Tags  []string `json:"tags" binding:"required"`
+		Value string   `json:"value" binding:"required"`
 	}
 )
 
@@ -85,11 +88,11 @@ func databaseTagRead(key string) (Tag, bool) {
 	return tag, ok
 }
 
-func databasePostsQuery(query string) []Post {
+func databasePostsQuery(query string) []PostData {
 	database.RLock()
 	defer database.RUnlock()
 
-	posts := make([]Post, 0)
+	posts := make([]PostData, 0)
 
 	if len(query) == 0 {
 		for _, post := range database.Posts {
@@ -112,7 +115,7 @@ func databasePostsQuery(query string) []Post {
 
 }
 
-func databasePostCreate(post Post) {
+func databasePostCreate(post PostData) {
 	database.Lock()
 	defer database.Unlock()
 	for _, tagName := range post.Tags {
@@ -121,26 +124,26 @@ func databasePostCreate(post Post) {
 			tag = Tag{}
 			database.Tags[tagName] = tag
 		}
-		Set(tag).Add(post.ID)
+		Set(tag).Add(post.PostKey)
 	}
-	database.Posts[post.ID] = post
+	database.Posts[post.PostKey] = post
 }
 
-func databasePostRead(key string) (Post, bool) {
+func databasePostRead(key PostKey) (PostData, bool) {
 	database.RLock()
 	defer database.RUnlock()
 	post, ok := database.Posts[key]
 	return post, ok
 }
 
-func databasePostDelete(key string) {
+func databasePostDelete(key PostKey) {
 	database.Lock()
 	defer database.Unlock()
 	if post, ok := database.Posts[key]; ok {
 		// remove post from tags
 		for _, tagName := range post.Tags {
 			tag := database.Tags[tagName]
-			Set(tag).Remove(post.ID)
+			Set(tag).Remove(post.PostKey)
 
 			// if tag is empty, delete it
 			if len(tag) == 0 {

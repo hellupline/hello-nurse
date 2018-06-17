@@ -132,7 +132,7 @@ func HttpHandlePostIndex(c *gin.Context) {
 }
 
 func HttpHandlePostCreate(c *gin.Context) {
-	post := Post{}
+	post := PostData{}
 	if err := c.ShouldBindJSON(&post); err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{
 			"errors": bindErrorResponse(err),
@@ -146,7 +146,8 @@ func HttpHandlePostCreate(c *gin.Context) {
 }
 
 func HttpHandlePostRead(c *gin.Context) {
-	post, ok := databasePostRead(c.Param("key"))
+	key := PostKey{c.Param("namespace"), c.Param("key")}
+	post, ok := databasePostRead(key)
 	if !ok {
 		c.String(http.StatusNotFound, "")
 		return
@@ -155,7 +156,8 @@ func HttpHandlePostRead(c *gin.Context) {
 }
 
 func HttpHandlePostDelete(c *gin.Context) {
-	databasePostDelete(c.Param("key"))
+	key := PostKey{c.Param("namespace"), c.Param("key")}
+	databasePostDelete(key)
 	c.JSON(http.StatusOK, gin.H{"result": "success"})
 }
 

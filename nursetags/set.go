@@ -1,8 +1,8 @@
 package nursetags
 
-type Set map[string]struct{}
+type Set map[PostKey]struct{}
 
-func NewSet(values ...string) Set {
+func NewSet(values ...PostKey) Set {
 	set := make(Set)
 	for _, value := range values {
 		set[value] = struct{}{}
@@ -10,12 +10,12 @@ func NewSet(values ...string) Set {
 	return set
 }
 
-func NewSetFromSlice(values []string) Set {
+func NewSetFromSlice(values []PostKey) Set {
 	return NewSet(values...)
 }
 
-func (set Set) Iter() <-chan string {
-	ch := make(chan string)
+func (set Set) Iter() <-chan PostKey {
+	ch := make(chan PostKey)
 	go func() {
 		for elem := range set {
 			ch <- elem
@@ -26,8 +26,8 @@ func (set Set) Iter() <-chan string {
 	return ch
 }
 
-func (set Set) ToSlice() []string {
-	keys := make([]string, 0, len(set))
+func (set Set) ToSlice() []PostKey {
+	keys := make([]PostKey, 0, len(set))
 	for elem := range set {
 		keys = append(keys, elem)
 	}
@@ -82,7 +82,7 @@ func (set Set) SymmetricDifference(other Set) Set {
 	return aDiff.Union(bDiff)
 }
 
-func (set Set) Add(i string) bool {
+func (set Set) Add(i PostKey) bool {
 	_, found := set[i]
 	if found {
 		return false
@@ -92,11 +92,11 @@ func (set Set) Add(i string) bool {
 	return true
 }
 
-func (set Set) Remove(i string) {
+func (set Set) Remove(i PostKey) {
 	delete(set, i)
 }
 
-func (set Set) Contains(i ...string) bool {
+func (set Set) Contains(i ...PostKey) bool {
 	for _, val := range i {
 		if _, ok := set[val]; !ok {
 			return false

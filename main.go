@@ -34,8 +34,8 @@ func main() {
 
 	postsGroup := v1Group.Group("/posts")
 	{
-		postsGroup.GET("/:key", nursetags.HttpHandlePostRead)
-		postsGroup.DELETE("/:key", nursetags.HttpHandlePostDelete)
+		postsGroup.GET("/:namespace/:key", nursetags.HttpHandlePostRead)
+		postsGroup.DELETE("/:namespace/:key", nursetags.HttpHandlePostDelete)
 		postsGroup.GET("", nursetags.HttpHandlePostIndex)
 		postsGroup.POST("", nursetags.HttpHandlePostCreate)
 	}

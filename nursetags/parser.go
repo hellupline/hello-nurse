@@ -9,55 +9,55 @@ import (
 	"go/token"
 )
 
-func parseExpr(expr string) (Set, error) {
+func (d *Database) ParseExpr(expr string) (Set, error) {
 	tr, err := parser.ParseExpr(expr)
 	if err != nil {
 		return nil, err
 	}
-	return eval(tr), nil
+	return d.eval(tr), nil
 }
 
-func eval(t ast.Expr) Set {
+func (d *Database) eval(t ast.Expr) Set {
 	switch t.(type) {
 	case *ast.BinaryExpr:
-		return evalBinaryExpr(t.(*ast.BinaryExpr))
+		return d.evalBinaryExpr(t.(*ast.BinaryExpr))
 	case *ast.ParenExpr:
-		return evalParenExpr(t.(*ast.ParenExpr))
+		return d.evalParenExpr(t.(*ast.ParenExpr))
 	case *ast.BasicLit:
-		return evalBasicLit(t.(*ast.BasicLit))
+		return d.evalBasicLit(t.(*ast.BasicLit))
 	case *ast.Ident:
-		return evalIdent(t.(*ast.Ident))
+		return d.evalIdent(t.(*ast.Ident))
 	}
 	return nil
 }
 
-func evalBinaryExpr(t *ast.BinaryExpr) Set {
+func (d *Database) evalBinaryExpr(t *ast.BinaryExpr) Set {
 	switch t.Op {
 	case token.AND:
-		return eval(t.X).Intersect(eval(t.Y))
+		return d.eval(t.X).Intersect(d.eval(t.Y))
 	case token.OR:
-		return eval(t.X).Union(eval(t.Y))
+		return d.eval(t.X).Union(d.eval(t.Y))
 	case token.XOR:
-		return eval(t.X).Difference(eval(t.Y))
+		return d.eval(t.X).Difference(d.eval(t.Y))
 	}
 	return nil
 }
 
-func evalParenExpr(t *ast.ParenExpr) Set {
-	return eval(t.X)
+func (d *Database) evalParenExpr(t *ast.ParenExpr) Set {
+	return d.eval(t.X)
 }
 
-func evalBasicLit(t *ast.BasicLit) Set {
+func (d *Database) evalBasicLit(t *ast.BasicLit) Set {
 	key := strings.Trim(t.Value, `"'`)
-	if tag, ok := DatabaseTagRead(key); ok {
+	if tag, ok := DefaultDatabase.TagRead(key); ok {
 		return Set(tag)
 	}
 	return Set{}
 }
 
-func evalIdent(t *ast.Ident) Set {
+func (d *Database) evalIdent(t *ast.Ident) Set {
 	key := t.Name
-	if tag, ok := DatabaseTagRead(key); ok {
+	if tag, ok := DefaultDatabase.TagRead(key); ok {
 		return Set(tag)
 	}
 	return Set{}

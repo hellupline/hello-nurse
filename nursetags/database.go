@@ -130,7 +130,7 @@ func (d *Database) PostQuery(query string) []PostData {
 		return posts
 	}
 
-	keys, err := parseExpr(query)
+	keys, err := d.ParseExpr(query)
 	if err != nil {
 		return posts
 	}

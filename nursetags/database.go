@@ -1,15 +1,19 @@
 package nursetags
 
 import (
+	"encoding/gob"
+	"io"
 	"sync"
 )
 
 type (
-	Database struct {
+	DataTables struct {
 		Favorites FavoritesDB
 		Tags      TagsDB
 		Posts     PostsDB
-
+	}
+	Database struct {
+		DataTables
 		sync.RWMutex
 	}
 
@@ -36,11 +40,36 @@ type (
 
 var (
 	database = Database{
-		Favorites: FavoritesDB{},
-		Tags:      TagsDB{},
-		Posts:     PostsDB{},
+		DataTables: DataTables{
+			Favorites: FavoritesDB{},
+			Tags:      TagsDB{},
+			Posts:     PostsDB{},
+		},
 	}
 )
+
+func (d *Database) Read(r io.Reader) error {
+	database.Lock()
+	defer database.Unlock()
+
+	var data DataTables
+	err := gob.NewDecoder(r).Decode(&data)
+	if err != nil {
+		return err
+	}
+
+	d.Favorites = data.Favorites
+	d.Tags = data.Tags
+	d.Posts = data.Posts
+	return nil
+}
+
+func (d *Database) Write(w io.Writer) error {
+	database.RLock()
+	defer database.RUnlock()
+
+	return gob.NewEncoder(w).Encode(d.DataTables)
+}
 
 func DatabaseFavoritesQuery() []Favorite {
 	favorites := make([]Favorite, 0)

@@ -1,7 +1,6 @@
 package nursetags
 
 import (
-	"encoding/gob"
 	"fmt"
 	"net/http"
 	"sort"
@@ -18,33 +17,18 @@ type DatabaseDump struct {
 }
 
 func HttpHandleUploadDatabaseGOB(c *gin.Context) {
-	var data DatabaseDump
-	database.Lock()
-	defer database.Unlock()
-
-	if err := gob.NewDecoder(c.Request.Body).Decode(&data); err != nil {
+	if err := database.Read(c.Request.Body); err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{
 			"errors": []string{err.Error()},
 		})
 		return
 	}
 
-	database.Favorites = data.Favorites
-	database.Tags = data.Tags
-	database.Posts = data.Posts
-
 	c.JSON(http.StatusOK, gin.H{"result": "success"})
 }
 
 func HttpHandleDownloadDatabaseGOB(c *gin.Context) {
-	database.RLock()
-	defer database.RUnlock()
-
-	_ = gob.NewEncoder(c.Writer).Encode(DatabaseDump{
-		Favorites: database.Favorites,
-		Tags:      database.Tags,
-		Posts:     database.Posts,
-	})
+	_ = database.Write(c.Writer)
 }
 
 func HttpHandleFavoriteIndex(c *gin.Context) {

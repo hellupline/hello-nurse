@@ -42,9 +42,6 @@ func main() {
 
 	datasetGroup := v1Group.Group("/dataset")
 	{
-		datasetGroup.GET("/download/json", nursetags.HttpHandleDownloadDatabaseJSON)
-		datasetGroup.POST("/upload/json", nursetags.HttpHandleUploadDatabaseJSON)
-
 		datasetGroup.GET("/download/gob", nursetags.HttpHandleDownloadDatabaseGOB)
 		datasetGroup.POST("/upload/gob", nursetags.HttpHandleUploadDatabaseGOB)
 	}

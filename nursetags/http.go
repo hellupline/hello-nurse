@@ -10,14 +10,8 @@ import (
 	"github.com/go-playground/validator"
 )
 
-type DatabaseDump struct {
-	Favorites FavoritesDB
-	Tags      TagsDB
-	Posts     PostsDB
-}
-
-func HttpHandleUploadDatabaseGOB(c *gin.Context) {
-	if err := database.Read(c.Request.Body); err != nil {
+func HttpHandleUploadDatasetGOB(c *gin.Context) {
+	if err := DefaultDatabase.Read(c.Request.Body); err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{
 			"errors": []string{err.Error()},
 		})
@@ -27,12 +21,12 @@ func HttpHandleUploadDatabaseGOB(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"result": "success"})
 }
 
-func HttpHandleDownloadDatabaseGOB(c *gin.Context) {
-	_ = database.Write(c.Writer)
+func HttpHandleDownloadDatasetGOB(c *gin.Context) {
+	_ = DefaultDatabase.Write(c.Writer)
 }
 
 func HttpHandleFavoriteIndex(c *gin.Context) {
-	favorites := DatabaseFavoritesQuery()
+	favorites := DefaultDatabase.FavoriteQuery()
 	sort.Slice(favorites, func(i, j int) bool {
 		return favorites[i].Name < favorites[j].Name
 	})
@@ -49,12 +43,12 @@ func HttpHandleFavoriteCreate(c *gin.Context) {
 		return
 	}
 
-	DatabaseFavoriteCreate(favorite)
+	DefaultDatabase.FavoriteCreate(favorite)
 	c.JSON(http.StatusOK, gin.H{"result": "success"})
 }
 
 func HttpHandleFavoriteRead(c *gin.Context) {
-	favorite, ok := DatabaseFavoriteRead(c.Param("key"))
+	favorite, ok := DefaultDatabase.FavoriteRead(c.Param("key"))
 	if !ok {
 		c.String(http.StatusNotFound, "")
 		return
@@ -63,12 +57,12 @@ func HttpHandleFavoriteRead(c *gin.Context) {
 }
 
 func HttpHandleFavoriteDelete(c *gin.Context) {
-	DatabaseFavoriteDelete(c.Param("key"))
+	DefaultDatabase.FavoriteDelete(c.Param("key"))
 	c.JSON(http.StatusOK, gin.H{"result": "success"})
 }
 
 func HttpHandleTagsIndex(c *gin.Context) {
-	tagNames := DatabaseTagsQuery()
+	tagNames := DefaultDatabase.TagQuery()
 	sort.Slice(tagNames, func(i, j int) bool {
 		return tagNames[i] < tagNames[j]
 	})
@@ -76,7 +70,7 @@ func HttpHandleTagsIndex(c *gin.Context) {
 }
 
 func HttpHandlePostIndex(c *gin.Context) {
-	posts := DatabasePostsQuery(c.Query("q"))
+	posts := DefaultDatabase.PostQuery(c.Query("q"))
 
 	sort.Slice(posts, func(i, j int) bool {
 		return posts[i].ID < posts[j].ID
@@ -94,13 +88,13 @@ func HttpHandlePostCreate(c *gin.Context) {
 		return
 	}
 
-	DatabasePostCreate(post)
+	DefaultDatabase.PostCreate(post)
 	c.JSON(http.StatusOK, gin.H{"result": "success"})
 }
 
 func HttpHandlePostRead(c *gin.Context) {
 	key := PostKey{c.Param("namespace"), c.Param("key")}
-	post, ok := DatabasePostRead(key)
+	post, ok := DefaultDatabase.PostRead(key)
 	if !ok {
 		c.String(http.StatusNotFound, "")
 		return
@@ -110,7 +104,7 @@ func HttpHandlePostRead(c *gin.Context) {
 
 func HttpHandlePostDelete(c *gin.Context) {
 	key := PostKey{c.Param("namespace"), c.Param("key")}
-	DatabasePostDelete(key)
+	DefaultDatabase.PostDelete(key)
 	c.JSON(http.StatusOK, gin.H{"result": "success"})
 }
 

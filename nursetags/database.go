@@ -39,7 +39,7 @@ type (
 )
 
 var (
-	database = Database{
+	DefaultDatabase = Database{
 		DataTables: DataTables{
 			Favorites: FavoritesDB{},
 			Tags:      TagsDB{},
@@ -49,8 +49,8 @@ var (
 )
 
 func (d *Database) Read(r io.Reader) error {
-	database.Lock()
-	defer database.Unlock()
+	d.Lock()
+	defer d.Unlock()
 
 	var data DataTables
 	err := gob.NewDecoder(r).Decode(&data)
@@ -65,66 +65,66 @@ func (d *Database) Read(r io.Reader) error {
 }
 
 func (d *Database) Write(w io.Writer) error {
-	database.RLock()
-	defer database.RUnlock()
+	d.RLock()
+	defer d.RUnlock()
 
 	return gob.NewEncoder(w).Encode(d.DataTables)
 }
 
-func DatabaseFavoritesQuery() []Favorite {
+func (d *Database) FavoriteQuery() []Favorite {
 	favorites := make([]Favorite, 0)
-	database.RLock()
-	defer database.RUnlock()
-	for _, favorite := range database.Favorites {
+	d.RLock()
+	defer d.RUnlock()
+	for _, favorite := range d.Favorites {
 		favorites = append(favorites, favorite)
 	}
 	return favorites
 }
 
-func DatabaseFavoriteCreate(favorite Favorite) {
-	database.Lock()
-	defer database.Unlock()
-	database.Favorites[favorite.Name] = favorite
+func (d *Database) FavoriteCreate(favorite Favorite) {
+	d.Lock()
+	defer d.Unlock()
+	d.Favorites[favorite.Name] = favorite
 }
 
-func DatabaseFavoriteRead(key string) (Favorite, bool) {
-	database.RLock()
-	defer database.RUnlock()
-	favorite, ok := database.Favorites[key]
+func (d *Database) FavoriteRead(key string) (Favorite, bool) {
+	d.RLock()
+	defer d.RUnlock()
+	favorite, ok := d.Favorites[key]
 	return favorite, ok
 }
 
-func DatabaseFavoriteDelete(key string) {
-	database.Lock()
-	defer database.Unlock()
-	delete(database.Favorites, key)
+func (d *Database) FavoriteDelete(key string) {
+	d.Lock()
+	defer d.Unlock()
+	delete(d.Favorites, key)
 }
 
-func DatabaseTagsQuery() []string {
-	keys := make([]string, 0, len(database.Tags))
-	database.RLock()
-	defer database.RUnlock()
-	for key := range database.Tags {
+func (d *Database) TagQuery() []string {
+	keys := make([]string, 0, len(d.Tags))
+	d.RLock()
+	defer d.RUnlock()
+	for key := range d.Tags {
 		keys = append(keys, key)
 	}
 	return keys
 }
 
-func DatabaseTagRead(key string) (Tag, bool) {
-	database.RLock()
-	defer database.RUnlock()
-	tag, ok := database.Tags[key]
+func (d *Database) TagRead(key string) (Tag, bool) {
+	d.RLock()
+	defer d.RUnlock()
+	tag, ok := d.Tags[key]
 	return tag, ok
 }
 
-func DatabasePostsQuery(query string) []PostData {
-	database.RLock()
-	defer database.RUnlock()
+func (d *Database) PostQuery(query string) []PostData {
+	d.RLock()
+	defer d.RUnlock()
 
 	posts := make([]PostData, 0)
 
 	if len(query) == 0 {
-		for _, post := range database.Posts {
+		for _, post := range d.Posts {
 			posts = append(posts, post)
 		}
 		return posts
@@ -136,7 +136,7 @@ func DatabasePostsQuery(query string) []PostData {
 	}
 
 	for postKey := range keys.Iter() {
-		if post, ok := database.Posts[postKey]; ok {
+		if post, ok := d.Posts[postKey]; ok {
 			posts = append(posts, post)
 		}
 	}
@@ -144,42 +144,42 @@ func DatabasePostsQuery(query string) []PostData {
 
 }
 
-func DatabasePostCreate(post PostData) {
-	database.Lock()
-	defer database.Unlock()
+func (d *Database) PostCreate(post PostData) {
+	d.Lock()
+	defer d.Unlock()
 	for _, tagName := range post.Tags {
-		tag, ok := database.Tags[tagName]
+		tag, ok := d.Tags[tagName]
 		if !ok {
 			tag = Tag{}
-			database.Tags[tagName] = tag
+			d.Tags[tagName] = tag
 		}
 		Set(tag).Add(post.PostKey)
 	}
-	database.Posts[post.PostKey] = post
+	d.Posts[post.PostKey] = post
 }
 
-func DatabasePostRead(key PostKey) (PostData, bool) {
-	database.RLock()
-	defer database.RUnlock()
-	post, ok := database.Posts[key]
+func (d *Database) PostRead(key PostKey) (PostData, bool) {
+	d.RLock()
+	defer d.RUnlock()
+	post, ok := d.Posts[key]
 	return post, ok
 }
 
-func DatabasePostDelete(key PostKey) {
-	database.Lock()
-	defer database.Unlock()
-	if post, ok := database.Posts[key]; ok {
+func (d *Database) PostDelete(key PostKey) {
+	d.Lock()
+	defer d.Unlock()
+	if post, ok := d.Posts[key]; ok {
 		// remove post from tags
 		for _, tagName := range post.Tags {
-			tag := database.Tags[tagName]
+			tag := d.Tags[tagName]
 			Set(tag).Remove(post.PostKey)
 
 			// if tag is empty, delete it
 			if len(tag) == 0 {
-				delete(database.Tags, tagName)
+				delete(d.Tags, tagName)
 			}
 		}
 
-		delete(database.Posts, key)
+		delete(d.Posts, key)
 	}
 }

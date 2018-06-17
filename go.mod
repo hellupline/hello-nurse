@@ -1,7 +1,6 @@
 module github.com/hellupline/hello-nurse
 
 require (
-	github.com/deckarep/golang-set v0.0.0-20180603214616-504e848d77ea
 	github.com/gin-contrib/cors v0.0.0-20180514151808-6f0a820f94be
 	github.com/gin-gonic/gin v0.0.0-20180531061340-caf3e350a548
 	github.com/go-playground/locales v0.12.1

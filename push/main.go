@@ -137,6 +137,28 @@ func main() {
 }
 
 func TagGenerator() chan *TagPage {
+	// tags := ReadTagsFile()
+	tags := []*TagPage{
+		NewTagPage("konachan.net", "landscape"),
+		NewTagPage("konachan.net", "moon"),
+		NewTagPage("konachan.net", "night"),
+		NewTagPage("konachan.net", "scenic"),
+		NewTagPage("konachan.net", "sky"),
+		NewTagPage("konachan.net", "star"),
+		NewTagPage("konachan.net", "sunset"),
+	}
+
+	out := make(chan *TagPage, len(tags))
+	go func() {
+		defer close(out)
+		for _, tag := range tags {
+			out <- tag
+		}
+	}()
+	return out
+}
+
+func ReadTagsFile() []*TagPage {
 	tags := make([]*TagPage, 0)
 
 	f, err := os.Open("./tags.txt")
@@ -149,15 +171,7 @@ func TagGenerator() chan *TagPage {
 	for scanner.Scan() {
 		tags = append(tags, NewTagPage("konachan.net", scanner.Text()))
 	}
-
-	out := make(chan *TagPage, len(tags))
-	go func() {
-		defer close(out)
-		for _, tag := range tags {
-			out <- tag
-		}
-	}()
-	return out
+	return tags
 }
 
 func Pipeline(in <-chan *TagPage, cb PipelineCallback) <-chan *TagPage {

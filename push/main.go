@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/hellupline/hello-nurse/nursetags"
 
@@ -20,7 +21,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const uploadURL = "http://localhost:8080/v1/dataset/upload/gob"
+const (
+	healthCheckURL = "http://localhost:8080/v1/dataset/upload/gob"
+	uploadURL      = "http://localhost:8080/v1/dataset/upload/gob"
+	waitPeriod     = 10
+)
 
 type (
 	PipelineCallback func(*TagPage, chan<- *TagPage)
@@ -74,6 +79,11 @@ func init() {
 }
 
 func main() {
+	for ok := healthCheck(); !ok; ok = healthCheck() {
+		log.Errorf("Server not online, waiting %d seconds\n", waitPeriod)
+		time.Sleep(waitPeriod * time.Second)
+	}
+
 	stage1 := Pipeline(TagGenerator(), func(tag *TagPage, out chan<- *TagPage) {
 		tag.Logger.Info("fetch started")
 		if err := tag.Fetch(); err != nil {
@@ -134,6 +144,11 @@ func main() {
 	if _, err := http.DefaultClient.Do(req); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func healthCheck() bool {
+	_, err := http.Get(healthCheckURL)
+	return err == nil
 }
 
 func TagGenerator() chan *TagPage {

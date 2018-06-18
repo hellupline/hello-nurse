@@ -21,12 +21,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const (
-	healthCheckURL = "http://localhost:8080/v1/dataset/upload/gob"
-	uploadURL      = "http://localhost:8080/v1/dataset/upload/gob"
-	waitPeriod     = 10
-)
-
 type (
 	PipelineCallback func(*TagPage, chan<- *TagPage)
 	DomainURL        func(*TagPage) *url.URL
@@ -64,12 +58,22 @@ var (
 			}
 		},
 	}
-	basePath string
+
+	uploadURL      = "http://localhost:8080/v1/dataset/upload/gob"
+	healthCheckURL = "http://localhost:8080/_ah/health"
+
+	waitPeriod time.Duration = 10
+	basePath   string
 )
 
 func init() {
 	log.SetLevel(log.InfoLevel)
 	log.SetOutput(os.Stderr)
+
+	if URL, ok := os.LookupEnv("NURSETAGS_URL"); ok {
+		uploadURL = fmt.Sprintf("%s/v1/dataset/upload/gob", URL)
+		healthCheckURL = fmt.Sprintf("%s/_ah/health", URL)
+	}
 
 	home, err := homedir.Dir()
 	if err != nil {

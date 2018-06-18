@@ -1,0 +1,7 @@
+# separated project
+push
+
+# devel helpers
+Makefile
+tests.py
+.mypy_cache

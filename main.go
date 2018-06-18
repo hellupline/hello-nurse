@@ -7,9 +7,11 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+
+	"google.golang.org/appengine"
 )
 
-func main() {
+func init() {
 	router := gin.Default()
 	router.Use(cors.Default())
 
@@ -50,5 +52,10 @@ func main() {
 		datasetGroup.POST("/upload/gob", nursetags.HttpHandleUploadDatasetGOB)
 	}
 
-	_ = router.Run()
+	// _ = router.Run()
+	http.Handle("/", router)
+}
+
+func main() {
+	appengine.Main()
 }

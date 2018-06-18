@@ -67,6 +67,7 @@ func TagGenerator() chan *TagPage {
 		NewTagPage("konachan.net", "sky"),
 		NewTagPage("konachan.net", "star"),
 		NewTagPage("konachan.net", "sunset"),
+		NewTagPage("konachan.net", "ruins"),
 	}
 
 	out := make(chan *TagPage, len(tags))

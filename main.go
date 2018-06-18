@@ -15,6 +15,10 @@ func main() {
 
 	v1Group := router.Group("/v1")
 
+	router.GET("/_ah/health", func(c *gin.Context) {
+		c.String(http.StatusOK, "ok")
+	})
+
 	router.GET("/", func(c *gin.Context) {
 		c.String(http.StatusOK, "hello")
 	})

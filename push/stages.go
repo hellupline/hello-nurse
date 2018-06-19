@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"net/http"
 	"os"
 
@@ -44,13 +45,18 @@ func FetchAllPagesStage(tag *TagPage, out chan<- *TagPage) {
 
 func DatabaseInsertStage(tag *TagPage, out chan<- *TagPage) {
 	for _, post := range tag.Posts {
+		payload, _ := json.Marshal(map[string]string{
+			"preview_url": post.PreviewURL,
+			"sample_url":  post.SampleURL,
+			"file_url":    post.FileURL,
+		})
 		nursetags.DefaultDatabase.PostCreate(nursetags.PostData{
 			PostKey: nursetags.PostKey{
 				Namespace: tag.Domain,
 				ID:        post.Key,
 			},
 			Tags:  post.Tags(),
-			Value: "https:" + post.URL,
+			Value: string(payload),
 		})
 	}
 	out <- tag

@@ -46,7 +46,10 @@ type (
 		Logger *log.Entry `xml:"-"`
 	}
 	PostPage struct {
-		URL     string `xml:"file_url,attr"`
+		PreviewURL string `xml:"preview_url,attr"`
+		SampleURL  string `xml:"sample_url,attr"`
+		FileURL    string `xml:"file_url,attr"`
+
 		Key     string `xml:"id,attr"`
 		RawTags string `xml:"tags,attr"`
 	}

@@ -64,7 +64,7 @@ func HttpHandleFavoriteDelete(c *gin.Context) {
 func HttpHandleTagsIndex(c *gin.Context) {
 	tagNames := DefaultDatabase.TagQuery()
 	sort.Slice(tagNames, func(i, j int) bool {
-		return tagNames[i] < tagNames[j]
+		return tagNames[i].Count > tagNames[j].Count
 	})
 	c.JSON(http.StatusOK, gin.H{"tags": tagNames})
 }

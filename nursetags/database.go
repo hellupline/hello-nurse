@@ -38,6 +38,11 @@ type (
 		Type  string `json:"type" binding:"required"`
 		Value string `json:"value" binding:"required"`
 	}
+
+	TagCount struct {
+		Count int    `json:"count"`
+		Name  string `json:"name"`
+	}
 )
 
 var (
@@ -75,8 +80,10 @@ func (d *Database) Write(w io.Writer) error {
 
 func (d *Database) FavoriteQuery() []Favorite {
 	favorites := make([]Favorite, 0)
+
 	d.RLock()
 	defer d.RUnlock()
+
 	for _, favorite := range d.Favorites {
 		favorites = append(favorites, favorite)
 	}
@@ -86,12 +93,14 @@ func (d *Database) FavoriteQuery() []Favorite {
 func (d *Database) FavoriteCreate(favorite Favorite) {
 	d.Lock()
 	defer d.Unlock()
+
 	d.Favorites[favorite.Name] = favorite
 }
 
 func (d *Database) FavoriteRead(key string) (Favorite, bool) {
 	d.RLock()
 	defer d.RUnlock()
+
 	favorite, ok := d.Favorites[key]
 	return favorite, ok
 }
@@ -99,31 +108,35 @@ func (d *Database) FavoriteRead(key string) (Favorite, bool) {
 func (d *Database) FavoriteDelete(key string) {
 	d.Lock()
 	defer d.Unlock()
+
 	delete(d.Favorites, key)
 }
 
-func (d *Database) TagQuery() []string {
-	keys := make([]string, 0, len(d.Tags))
+func (d *Database) TagQuery() []TagCount {
+	tagCounts := make([]TagCount, 0, len(d.Tags))
+
 	d.RLock()
 	defer d.RUnlock()
-	for key := range d.Tags {
-		keys = append(keys, key)
+
+	for key, value := range d.Tags {
+		tagCounts = append(tagCounts, TagCount{len(value), key})
 	}
-	return keys
+	return tagCounts
 }
 
 func (d *Database) TagRead(key string) (Tag, bool) {
 	d.RLock()
 	defer d.RUnlock()
+
 	tag, ok := d.Tags[key]
 	return tag, ok
 }
 
 func (d *Database) PostQuery(query string) []PostData {
+	posts := make([]PostData, 0)
+
 	d.RLock()
 	defer d.RUnlock()
-
-	posts := make([]PostData, 0)
 
 	if len(query) == 0 {
 		for _, post := range d.Posts {
@@ -149,6 +162,7 @@ func (d *Database) PostQuery(query string) []PostData {
 func (d *Database) PostCreate(post PostData) {
 	d.Lock()
 	defer d.Unlock()
+
 	for _, tagName := range post.Tags {
 		tag, ok := d.Tags[tagName]
 		if !ok {
@@ -163,6 +177,7 @@ func (d *Database) PostCreate(post PostData) {
 func (d *Database) PostRead(key PostKey) (PostData, bool) {
 	d.RLock()
 	defer d.RUnlock()
+
 	post, ok := d.Posts[key]
 	return post, ok
 }
@@ -170,6 +185,7 @@ func (d *Database) PostRead(key PostKey) (PostData, bool) {
 func (d *Database) PostDelete(key PostKey) {
 	d.Lock()
 	defer d.Unlock()
+
 	if post, ok := d.Posts[key]; ok {
 		// remove post from tags
 		for _, tagName := range post.Tags {

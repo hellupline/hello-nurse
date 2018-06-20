@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
+	"sync"
 
 	"github.com/hellupline/hello-nurse/nursetags"
 
@@ -119,4 +120,27 @@ func DatabaseUpload() {
 		log.Fatal(err)
 	}
 	log.Info("Database push done")
+}
+
+// pipeline control
+func Pipeline(in <-chan *TagPage, cb PipelineCallback) <-chan *TagPage {
+	out := make(chan *TagPage, 1)
+
+	wg := sync.WaitGroup{}
+	worker := func() {
+		defer wg.Done()
+		for tag := range in {
+			cb(tag, out)
+		}
+	}
+	wg.Add(4)
+	for i := 0; i < 4; i++ {
+		go worker()
+	}
+	go func() {
+		defer close(out)
+		wg.Wait()
+	}()
+
+	return out
 }

@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"sync"
 	"time"
 
 	homedir "github.com/mitchellh/go-homedir"
@@ -63,26 +62,4 @@ func HealthCheck() {
 		log.Errorf("Server not online, waiting %d seconds\n", waitPeriod)
 		time.Sleep(waitPeriod * time.Second)
 	}
-}
-
-func Pipeline(in <-chan *TagPage, cb PipelineCallback) <-chan *TagPage {
-	out := make(chan *TagPage, 1)
-
-	wg := sync.WaitGroup{}
-	worker := func() {
-		defer wg.Done()
-		for tag := range in {
-			cb(tag, out)
-		}
-	}
-	wg.Add(4)
-	for i := 0; i < 4; i++ {
-		go worker()
-	}
-	go func() {
-		defer close(out)
-		wg.Wait()
-	}()
-
-	return out
 }

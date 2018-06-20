@@ -54,9 +54,10 @@ func DatabaseInsertStage(tag *TagPage, out chan<- *TagPage) {
 		nursetags.DefaultDatabase.PostCreate(nursetags.PostData{
 			PostKey: nursetags.PostKey{
 				Namespace: tag.Domain,
-				ID:        post.Key,
+				Key:       post.Key,
 			},
 			Tags:  post.Tags(),
+			Type:  "booru-image",
 			Value: string(payload),
 		})
 	}

@@ -73,7 +73,7 @@ func HttpHandlePostIndex(c *gin.Context) {
 	posts := DefaultDatabase.PostQuery(c.Query("q"))
 
 	sort.Slice(posts, func(i, j int) bool {
-		return posts[i].ID < posts[j].ID
+		return posts[i].Key < posts[j].Key
 	})
 	c.JSON(http.StatusOK, gin.H{"posts": posts})
 }

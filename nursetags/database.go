@@ -28,13 +28,15 @@ type (
 	PostsDB map[PostKey]PostData
 	PostKey struct {
 		Namespace string `json:"namespace" binding:"required"`
-		ID        string `json:"id" binding:"required"`
+		Key       string `json:"key" binding:"required"`
 	}
 	PostData struct {
 		PostKey
 
-		Tags  []string `json:"tags" binding:"required"`
-		Value string   `json:"value" binding:"required"`
+		Tags []string `json:"tags" binding:"required"`
+
+		Type  string `json:"type" binding:"required"`
+		Value string `json:"value" binding:"required"`
 	}
 )
 

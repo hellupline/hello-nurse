@@ -16,18 +16,7 @@ import (
 
 var (
 	domainURLs = map[string]DomainURL{
-		"konachan.net": func(tag *TagPage) *url.URL {
-			return &url.URL{
-				RawQuery: url.Values{
-					"limit": []string{strconv.Itoa(tag.Limit)},
-					"page":  []string{strconv.Itoa(tag.Page)},
-					"tags":  []string{tag.Name},
-				}.Encode(),
-				Scheme: "https",
-				Host:   "konachan.net",
-				Path:   "/post.xml",
-			}
-		},
+		"konachan.net": KonachanURLBuilder,
 	}
 )
 
@@ -136,4 +125,17 @@ func (t *TagPage) Pages() int {
 
 func (p *PostPage) Tags() []string {
 	return strings.Split(strings.TrimSpace(p.RawTags), " ")
+}
+
+func KonachanURLBuilder(tag *TagPage) *url.URL {
+	return &url.URL{
+		RawQuery: url.Values{
+			"limit": []string{strconv.Itoa(tag.Limit)},
+			"page":  []string{strconv.Itoa(tag.Page)},
+			"tags":  []string{tag.Name},
+		}.Encode(),
+		Scheme: "https",
+		Host:   "konachan.net",
+		Path:   "/post.xml",
+	}
 }

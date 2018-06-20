@@ -53,10 +53,10 @@ def test_posts():
             "POST",
             f"{SERVER_URL}/posts",
             json={
-                "tags": [f"x:{x:04}", f"y:{y:04}"],
                 "namespace": "test",
-                "external": True,
-                "id": f"k:{i:04}",
+                "key": f"k:{i:04}",
+                "tags": [f"x:{x:04}", f"y:{y:04}"],
+                "type": "testing",
                 "value": f"v:{i:04}",
             },
         )
@@ -83,7 +83,7 @@ def test_posts():
         return
     for favorite in posts:
         response = session.request(
-            "DELETE", f"{SERVER_URL}/posts/{favorite['id']}")
+            "DELETE", f"{SERVER_URL}/posts/{favorite['key']}")
         assert response.status_code == 200, "Response is not 200"
 
     # assert all tags deleted

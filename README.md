@@ -37,4 +37,10 @@ push folder, or run the python3.6 script `tests.py`
 
 ## TODO
 * Better handling of operations, and parser errors
+* move http to main.go
+* rename push to booru-push
+* create booru-serve
 * Single Page Application
+  * List of session picked files
+  * List of Favorites
+  * List of Posts per query

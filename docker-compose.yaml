@@ -1,0 +1,45 @@
+version: '3.6'
+services:
+
+  nursequery:
+    labels:
+      - 'traefik.frontend.rule=Host:api.hellupline.com'
+    build:
+      dockerfile: 'Dockerfile'
+      context: './nursequery/'
+    restart: always
+    networks:
+      - 'frontend'
+      - 'backend'
+    expose:
+      - '8080'
+    depends_on:
+      - 'nursefetch'
+
+  nursebadge:
+    labels:
+      - 'traefik.frontend.rule=Host:www.hellupline.com'
+    build:
+      dockerfile: 'Dockerfile'
+      context: './nursebadge/'
+    restart: always
+    networks:
+      - 'frontend'
+    expose:
+      - '8080'
+    depends_on:
+      - 'nursequery'
+
+  nursefetch:
+    build:
+      dockerfile: 'Dockerfile'
+      context: './nursefetch/'
+    restart: always
+    networks:
+      - 'backend'
+    expose:
+      - '8080'
+
+networks:
+  frontend:
+  backend:

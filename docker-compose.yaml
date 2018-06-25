@@ -1,44 +1,61 @@
 version: '3.6'
 services:
 
-  nursequery:
+  rabbitmq:
     labels:
-      - 'traefik.frontend.rule=Host:api.hellupline.com'
-    build:
-      dockerfile: 'Dockerfile'
-      context: './nursequery/'
+      - traefik.frontend.rule=Host:rabbitmq.hellupline.com
+      - traefik.port=15672
+    image: rabbitmq:3.7-management-alpine
     restart: always
     networks:
-      - 'frontend'
-      - 'backend'
+      - backend
+    expose:
+      - '15672'
+      - '5672'
+
+  nursequery:
+    labels:
+      - traefik.frontend.rule=Host:query.hellupline.com
+    image: hellupline/nursequery
+    build:
+      dockerfile: Dockerfile
+      context: ./nursequery/
+    restart: always
+    networks:
+      - frontend
+      - backend
     expose:
       - '8080'
     depends_on:
-      - 'nursefetch'
+      - nursefetch
 
   nursebadge:
     labels:
-      - 'traefik.frontend.rule=Host:www.hellupline.com'
+      - traefik.frontend.rule=Host:www.hellupline.com
+    image: hellupline/nursebadge
     build:
-      dockerfile: 'Dockerfile'
-      context: './nursebadge/'
+      dockerfile: Dockerfile
+      context: ./nursebadge/
     restart: always
     networks:
-      - 'frontend'
+      - frontend
     expose:
       - '8080'
     depends_on:
-      - 'nursequery'
+      - nursequery
 
   nursefetch:
+    labels:
+      - traefik.enable=false
+    image: hellupline/nursefetch
     build:
-      dockerfile: 'Dockerfile'
-      context: './nursefetch/'
+      dockerfile: Dockerfile
+      context: ./nursefetch/
     restart: always
     networks:
-      - 'backend'
-    expose:
-      - '8080'
+      - backend
+    depends_on:
+      - rabbitmq
 
 networks:
   frontend:

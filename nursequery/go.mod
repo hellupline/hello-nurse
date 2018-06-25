@@ -11,6 +11,7 @@ require (
 	github.com/manucorporat/sse v0.0.0-20160126180136-ee05b128a739
 	github.com/mattn/go-isatty v0.0.3
 	github.com/pmezard/go-difflib v0.0.0-20160110105554-792786c7400a
+	github.com/streadway/amqp v0.0.0-20180528204448-e5adc2ada8b8
 	golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f
 	golang.org/x/sys v0.0.0-20180622082034-63fc586f45fe
 	google.golang.org/appengine v1.1.0

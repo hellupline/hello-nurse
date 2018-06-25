@@ -5,6 +5,6 @@ EXPOSE 8080
 
 ADD ./ ./
 
-RUN make build
+RUN go build -o nursequery ./
 
 CMD ["./nursequery"]

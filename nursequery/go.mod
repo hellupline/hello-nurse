@@ -8,7 +8,6 @@ require (
 	github.com/go-playground/validator v0.0.0-20180514145739-f28cb45dc0f0
 	github.com/google/gofuzz v0.0.0-20170612174753-24818f796faf
 	github.com/hellupline/hello-nurse/nursetags v0.0.0-20180624052445-3e6910777e63
-	github.com/manucorporat/sse v0.0.0-20160126180136-ee05b128a739
 	github.com/mattn/go-isatty v0.0.3
 	github.com/pmezard/go-difflib v0.0.0-20160110105554-792786c7400a
 	github.com/streadway/amqp v0.0.0-20180528204448-e5adc2ada8b8

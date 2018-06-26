@@ -1,18 +1,5 @@
 version: '3.6'
 services:
-
-  rabbitmq:
-    labels:
-      - traefik.frontend.rule=Host:rabbitmq.hellupline.com
-      - traefik.port=15672
-    image: rabbitmq:3.7-management-alpine
-    restart: always
-    networks:
-      - backend
-    expose:
-      - '15672'
-      - '5672'
-
   nursequery:
     labels:
       - traefik.frontend.rule=Host:query.hellupline.com
@@ -45,8 +32,6 @@ services:
       - nursequery
 
   nursefetch:
-    labels:
-      - traefik.enable=false
     image: hellupline/nursefetch
     build:
       dockerfile: Dockerfile
@@ -57,6 +42,70 @@ services:
     depends_on:
       - rabbitmq
 
+  rabbitmq:
+    labels:
+      - traefik.frontend.rule=Host:rabbitmq.hellupline.com
+      - traefik.port=15672
+    image: rabbitmq:3.7-management-alpine
+    restart: always
+    networks:
+      - backend
+    expose:
+      - '15672'
+      - '5672'
+
+  traefik:
+    labels:
+      - traefik.frontend.rule=Host:traefik.hellupline.com
+      - traefik.port=8080
+    image: traefik
+    command: --api --docker
+    restart: always
+    networks:
+      - frontend
+      - backend
+      - services
+    expose:
+      - '8080'
+    ports:
+      - '80:80'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  portainer:
+    labels:
+      - traefik.frontend.rule=Host:portainer.hellupline.com
+    image: portainer/portainer
+    command: -H unix:///var/run/docker.sock
+    restart: always
+    networks:
+      - services
+    expose:
+      - '9090'
+    volumes:
+      - portainer_data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  gitea:
+    labels:
+      - traefik.frontend.rule=Host:gitea.hellupline.com
+      - traefik.port=3000
+    image: gitea/gitea:1.3.2
+    restart: always
+    networks:
+      - services
+    expose:
+      - '3000'
+    ports:
+      - '2222:22'
+    volumes:
+      - gitea_data:/data
+
 networks:
   frontend:
   backend:
+  services:
+
+volumes:
+  portainer_data:
+  gitea_data:

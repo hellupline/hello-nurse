@@ -36,6 +36,9 @@ services:
     build:
       dockerfile: Dockerfile
       context: ./nursefetch/
+    environment:
+      MINIO_ACCESS_KEY: UJWULGBNSZOOGRPVPIIB
+      MINIO_SECRET_KEY: pgT6IKrk0NarL3nsPlaDm6qCtlQaHW3buyYACFwY
     restart: always
     networks:
       - backend
@@ -53,6 +56,20 @@ services:
     expose:
       - '15672'
       - '5672'
+
+  minio:
+    image: minio/minio
+    command: server data
+    environment:
+      MINIO_ACCESS_KEY: UJWULGBNSZOOGRPVPIIB
+      MINIO_SECRET_KEY: pgT6IKrk0NarL3nsPlaDm6qCtlQaHW3buyYACFwY
+    restart: always
+    networks:
+      - backend
+    expose:
+      - '9000'
+    volumes:
+      - minio_data:/data
 
   traefik:
     labels:
@@ -109,3 +126,4 @@ networks:
 volumes:
   portainer_data:
   gitea_data:
+  minio_data:

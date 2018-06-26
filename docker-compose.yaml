@@ -14,7 +14,23 @@ services:
     expose:
       - '8080'
     depends_on:
-      - nursefetch
+      - rabbitmq
+      - traefik
+
+  nursefetch:
+    image: hellupline/nursefetch
+    build:
+      dockerfile: Dockerfile
+      context: ./nursefetch/
+    environment:
+      MINIO_ACCESS_KEY: UJWULGBNSZOOGRPVPIIB
+      MINIO_SECRET_KEY: pgT6IKrk0NarL3nsPlaDm6qCtlQaHW3buyYACFwY
+    restart: always
+    networks:
+      - backend
+    depends_on:
+      - rabbitmq
+      - traefik
 
   nursebadge:
     labels:
@@ -30,20 +46,6 @@ services:
       - '8080'
     depends_on:
       - nursequery
-
-  nursefetch:
-    image: hellupline/nursefetch
-    build:
-      dockerfile: Dockerfile
-      context: ./nursefetch/
-    environment:
-      MINIO_ACCESS_KEY: UJWULGBNSZOOGRPVPIIB
-      MINIO_SECRET_KEY: pgT6IKrk0NarL3nsPlaDm6qCtlQaHW3buyYACFwY
-    restart: always
-    networks:
-      - backend
-    depends_on:
-      - rabbitmq
 
   rabbitmq:
     labels:

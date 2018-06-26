@@ -1,55 +1,73 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 
 	"github.com/streadway/amqp"
 )
 
-func failOnError(err error, msg string) {
-	if err != nil {
-		log.Fatalf("%s: %s", msg, err)
+type (
+	NurseFetchTask struct {
+		Domain string `json:"domain" binding:"required"`
+		Tag    string `json:"tag" binding:"required"`
 	}
-}
+)
+
+var (
+	amqpConnection *amqp.Connection
+	amqpChannel    *amqp.Channel
+	nurseQueue     amqp.Queue
+)
 
 func main() {
-	conn, err := amqp.Dial("amqp://guest:guest@rabbitmq:5672/")
+	var err error
+
+	amqpConnection, err = amqp.Dial("amqp://guest:guest@rabbitmq:5672/")
 	failOnError(err, "Failed to connect to RabbitMQ")
-	defer conn.Close()
+	defer amqpConnection.Close()
 
-	ch, err := conn.Channel()
+	amqpChannel, err = amqpConnection.Channel()
 	failOnError(err, "Failed to open a channel")
-	defer ch.Close()
+	defer amqpChannel.Close()
 
-	q, err := ch.QueueDeclare(
-		"hello", // name
-		false,   // durable
-		false,   // delete when unused
-		false,   // exclusive
-		false,   // no-wait
-		nil,     // arguments
+	nurseQueue, err = amqpChannel.QueueDeclare(
+		"nurse-fetch", // name
+		false,         // durable
+		false,         // delete when unused
+		false,         // exclusive
+		false,         // no-wait
+		nil,           // arguments
 	)
 	failOnError(err, "Failed to declare a queue")
 
-	msgs, err := ch.Consume(
-		q.Name, // queue
-		"",     // consumer
-		true,   // auto-ack
-		false,  // exclusive
-		false,  // no-local
-		false,  // no-wait
-		nil,    // args
+	msgs, err := amqpChannel.Consume(
+		nurseQueue.Name, // queue
+		"",              // consumer
+		true,            // auto-ack
+		false,           // exclusive
+		false,           // no-local
+		false,           // no-wait
+		nil,             // args
 	)
 	failOnError(err, "Failed to register a consumer")
 
-	forever := make(chan bool)
-
 	go func() {
 		for d := range msgs {
-			log.Printf("Received a message: %s", d.Body)
+			data := NurseFetchTask{}
+			json.Unmarshal(d.Body, &data)
+			log.Printf("Received a message: %#v", data)
 		}
 	}()
 
 	log.Printf(" [*] Waiting for messages. To exit press CTRL+C")
+
+	forever := make(chan bool)
 	<-forever
+}
+
+func failOnError(err error, msg string) {
+	if err != nil {
+		log.Fatalf("%s: %s", msg, err)
+	}
 }

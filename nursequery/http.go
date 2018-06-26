@@ -1,14 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"sort"
 
 	"github.com/hellupline/hello-nurse/nursetags"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator"
 )
 
 func HttpHandleFavoriteIndex(c *gin.Context) {
@@ -117,17 +115,4 @@ func HttpHandleDatasetDownloadGOB(c *gin.Context) {
 
 func HttpHandleHealthCheck(c *gin.Context) {
 	c.String(http.StatusOK, "ok")
-}
-
-func bindErrorResponse(err error) map[string][]string {
-	errors := make(map[string][]string)
-	switch msg := err.(type) {
-	case validator.ValidationErrors:
-		for _, v := range msg {
-			errors[v.Field()] = append(errors[v.Field()], v.Tag())
-		}
-	default:
-		errors["unknown"] = []string{fmt.Sprintln(err)}
-	}
-	return errors
 }

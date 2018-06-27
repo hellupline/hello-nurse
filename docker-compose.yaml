@@ -4,6 +4,7 @@ services:
     labels:
       - traefik.frontend.rule=Host:query.hellupline.com
     image: hellupline/nursequery
+    env_file: development.env
     build:
       dockerfile: Dockerfile
       context: ./nursequery/
@@ -19,12 +20,10 @@ services:
 
   nursefetch:
     image: hellupline/nursefetch
+    env_file: development.env
     build:
       dockerfile: Dockerfile
       context: ./nursefetch/
-    environment:
-      MINIO_ACCESS_KEY: UJWULGBNSZOOGRPVPIIB
-      MINIO_SECRET_KEY: pgT6IKrk0NarL3nsPlaDm6qCtlQaHW3buyYACFwY
     restart: always
     networks:
       - backend
@@ -36,6 +35,7 @@ services:
     labels:
       - traefik.frontend.rule=Host:www.hellupline.com
     image: hellupline/nursebadge
+    env_file: development.env
     build:
       dockerfile: Dockerfile
       context: ./nursebadge/
@@ -52,6 +52,7 @@ services:
       - traefik.frontend.rule=Host:rabbitmq.hellupline.com
       - traefik.port=15672
     image: rabbitmq:3.7-management-alpine
+    env_file: development.env
     restart: always
     networks:
       - backend
@@ -61,10 +62,8 @@ services:
 
   minio:
     image: minio/minio
+    env_file: development.env
     command: server data
-    environment:
-      MINIO_ACCESS_KEY: UJWULGBNSZOOGRPVPIIB
-      MINIO_SECRET_KEY: pgT6IKrk0NarL3nsPlaDm6qCtlQaHW3buyYACFwY
     restart: always
     networks:
       - backend

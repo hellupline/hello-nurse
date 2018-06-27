@@ -76,7 +76,7 @@ func init() {
 func main() {
 	var err error
 
-	amqpConnection, err = amqp.Dial("amqp://guest:guest@rabbitmq:5672/")
+	amqpConnection, err = amqp.Dial("amqp://nurse:animaniacs@rabbitmq:5672/")
 	failOnError(err, "Failed to connect to RabbitMQ")
 	defer amqpConnection.Close()
 

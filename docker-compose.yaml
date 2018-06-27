@@ -61,6 +61,8 @@ services:
       - '5672'
 
   minio:
+    labels:
+      - traefik.frontend.rule=Host:minio.hellupline.com
     image: minio/minio
     env_file: development.env
     command: server data

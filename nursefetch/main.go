@@ -1,10 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/minio/minio-go"
@@ -54,16 +54,14 @@ func init() {
 	nurseQueryHealth = fmt.Sprintf("http://%s/_ah/health", nurseQueryURI)
 }
 
-func main() {
+func init() {
 	var err error
 
 	amqpConnection, err = amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s/", rabbitmqUser, rabbitmqPass, rabbitmqURI))
 	failOnError(err, "Failed to connect to RabbitMQ")
-	defer amqpConnection.Close()
 
 	amqpChannel, err = amqpConnection.Channel()
 	failOnError(err, "Failed to open a channel")
-	defer amqpChannel.Close()
 
 	nurseQueue, err = amqpChannel.QueueDeclare(
 		nurseFetchQueue, // name
@@ -75,50 +73,29 @@ func main() {
 	)
 	failOnError(err, "Failed to declare a queue")
 
-	msgs, err := amqpChannel.Consume(
-		nurseQueue.Name, // queue
-		"",              // consumer
-		true,            // auto-ack
-		false,           // exclusive
-		false,           // no-local
-		false,           // no-wait
-		nil,             // args
-	)
-	failOnError(err, "Failed to register a consumer")
-
 	minioClient, err = minio.New(minioURI, minioAccessKey, minioSecretKey, minioUseSSL)
 	failOnError(err, "Failed to coonect to minio")
+}
 
-	var exists bool
-	exists, err = minioClient.BucketExists(bucketName)
-	failOnError(err, "Failed to check bucket")
-	if !exists {
-		err = minioClient.MakeBucket(bucketName, "hell")
-		failOnError(err, "Failed to create bucket")
-	}
+func main() {
+	defer amqpConnection.Close()
+	defer amqpChannel.Close()
+
+	ensureBucket()
+
+	stage0 := amqpConsume()
 
 	go func() {
-		for d := range msgs {
-			data := NurseFetchTask{}
-			json.Unmarshal(d.Body, &data)
+		for msg := range stage0 {
+			log.Println(msg)
 
-			tagPage := NewTagPage(data.Domain, data.Tag)
-			log.Printf("Received a message: %#v", tagPage)
-
-			_, _ = minioClient.PutObject(
-				bucketName,
-				data.Tag,
-				strings.NewReader(string(d.Body)),
-				int64(len(d.Body)),
-				minio.PutObjectOptions{ContentType: "application/json"},
-			)
 		}
 	}()
 
 	log.Printf(" [*] Waiting for messages. To exit press CTRL+C")
 
-	forever := make(chan bool)
-	<-forever
+	wait := make(chan bool)
+	<-wait
 }
 
 func failOnError(err error, msg string) {
@@ -133,4 +110,53 @@ func ensureEnv(key string) string {
 		log.Fatalf("Environment variable %s missing.", key)
 	}
 	return value
+}
+
+func ensureBucket() {
+	exists, err := minioClient.BucketExists(bucketName)
+	failOnError(err, "Failed to check bucket")
+	if !exists {
+		err = minioClient.MakeBucket(bucketName, "hell")
+		failOnError(err, "Failed to create bucket")
+	}
+}
+
+func amqpConsume() <-chan NurseFetchTask {
+	msgs, err := amqpChannel.Consume(
+		nurseQueue.Name, // queue
+		"",              // consumer
+		true,            // auto-ack
+		false,           // exclusive
+		false,           // no-local
+		false,           // no-wait
+		nil,             // args
+	)
+	failOnError(err, "Failed to register a consumer")
+
+	out := make(chan NurseFetchTask)
+
+	go func() {
+		for d := range msgs {
+			data := NurseFetchTask{}
+			json.Unmarshal(d.Body, &data)
+
+			tagPage := NewTagPage(data.Domain, data.Tag)
+			log.Printf("Received a message: %#v", tagPage)
+
+			out <- data
+		}
+	}()
+
+	return out
+}
+
+func writeToMinio(filename string, data []byte) error {
+	_, err := minioClient.PutObject(
+		bucketName,
+		filename,
+		bytes.NewReader(data),
+		int64(len(data)),
+		minio.PutObjectOptions{ContentType: "application/json"},
+	)
+	return err
 }

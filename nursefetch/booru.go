@@ -14,9 +14,14 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var (
+	domainURLs = map[string]DomainURL{
+		"konachan.net": KonachanURLBuilder,
+	}
+)
+
 type (
-	PipelineCallback func(*TagPage, chan<- *TagPage)
-	DomainURL        func(*TagPage) *url.URL
+	DomainURL func(*TagPage) *url.URL
 
 	TagPage struct {
 		Domain string `xml:"-"`
@@ -30,15 +35,12 @@ type (
 		Logger *log.Entry `xml:"-"`
 	}
 	PostPage struct {
-		URL     string `xml:"file_url,attr"`
+		PreviewURL string `xml:"preview_url,attr"`
+		SampleURL  string `xml:"sample_url,attr"`
+		FileURL    string `xml:"file_url,attr"`
+
 		Key     string `xml:"id,attr"`
 		RawTags string `xml:"tags,attr"`
-	}
-)
-
-var (
-	domainURLs = map[string]DomainURL{
-		"konachan.net": KonachanUrlBuilder,
 	}
 )
 
@@ -127,7 +129,7 @@ func (p *PostPage) Tags() []string {
 	return strings.Split(strings.TrimSpace(p.RawTags), " ")
 }
 
-func KonachanUrlBuilder(tag *TagPage) *url.URL {
+func KonachanURLBuilder(tag *TagPage) *url.URL {
 	return &url.URL{
 		RawQuery: url.Values{
 			"limit": []string{strconv.Itoa(tag.Limit)},

@@ -4,6 +4,7 @@ require (
 	github.com/go-ini/ini v1.37.0
 	github.com/golang/protobuf v1.1.0
 	github.com/gopherjs/gopherjs v0.0.0-20180424202546-8dffc02ea1cb
+	github.com/hellupline/hello-nurse/nursetags v0.0.0-20180624052445-3e6910777e63
 	github.com/jtolds/gls v0.0.0-20170503224851-77f18212c9c7
 	github.com/minio/minio-go v0.0.0-20180622010148-f43432a35c6f
 	github.com/mitchellh/go-homedir v0.0.0-20180523094522-3864e76763d9

@@ -14,6 +14,8 @@ github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
 # github.com/gopherjs/gopherjs v0.0.0-20180424202546-8dffc02ea1cb
 github.com/gopherjs/gopherjs/js
+# github.com/hellupline/hello-nurse/nursetags v0.0.0-20180624052445-3e6910777e63
+github.com/hellupline/hello-nurse/nursetags
 # github.com/jtolds/gls v0.0.0-20170503224851-77f18212c9c7
 github.com/jtolds/gls
 # github.com/minio/minio-go v0.0.0-20180622010148-f43432a35c6f

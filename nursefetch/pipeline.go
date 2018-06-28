@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/hellupline/hello-nurse/nursetags"
+
 	log "github.com/sirupsen/logrus"
 )
 
@@ -46,9 +48,25 @@ func FetchAllPagesStage(tag *TagPage, out chan<- *TagPage) {
 
 func SaveToQueryServer(tag *TagPage, out chan<- *TagPage) {
 	for _, post := range tag.Posts {
-		log.Info("Saving Post", post.Key)
+		payload, _ := json.Marshal(map[string]string{
+			"preview_url": post.PreviewURL,
+			"sample_url":  post.SampleURL,
+			"file_url":    post.FileURL,
+		})
+
+		obj := nursetags.PostData{
+			PostKey: nursetags.PostKey{
+				Namespace: tag.Domain,
+				Key:       post.Key,
+			},
+			Tags:  post.Tags(),
+			Type:  "booru-image",
+			Value: string(payload),
+		}
+
 		var buf bytes.Buffer
-		if err := json.NewEncoder(&buf).Encode(post); err != nil {
+
+		if err := json.NewEncoder(&buf).Encode(obj); err != nil {
 			log.Warning("Failed to encode json", post.Key)
 		}
 		if _, err := http.Post(nurseQueryPostURI, "application/json", &buf); err != nil {

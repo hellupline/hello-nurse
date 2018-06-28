@@ -54,7 +54,7 @@ func init() {
 			postsGroup.GET("/:namespace/:key", HttpHandlePostRead)
 			postsGroup.DELETE("/:namespace/:key", HttpHandlePostDelete)
 			postsGroup.GET("", HttpHandlePostIndex)
-			postsGroup.POST("", HttpHandlePostDelete)
+			postsGroup.POST("", HttpHandlePostCreate)
 		}
 
 		datasetGroup := v1Group.Group("/dataset")

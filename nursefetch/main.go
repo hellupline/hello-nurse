@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"time"
 
@@ -20,10 +21,10 @@ type (
 )
 
 var (
-	rabbitmqUser, rabbitmqPass, rabbitmqURI                 string
-	minioAccessKey, minioSecretKey, minioURI                string
-	minioUseSSL                                             bool
-	nurseQueryDatasetURI, nurseQueryHealth, nurseFetchQueue string
+	rabbitmqUser, rabbitmqPass, rabbitmqURI  string
+	minioAccessKey, minioSecretKey, minioURI string
+	minioUseSSL                              bool
+	nurseQueryPostURI, nurseFetchQueue       string
 
 	bucketName = "response-data"
 
@@ -50,8 +51,7 @@ func init() {
 	nurseQueryURI := ensureEnv("NURSEQUERY_URI")
 	nurseFetchQueue = ensureEnv("NURSEFETCH_QUEUE")
 
-	nurseQueryDatasetURI = fmt.Sprintf("http://%s/v1/dataset/upload/gob", nurseQueryURI)
-	nurseQueryHealth = fmt.Sprintf("http://%s/_ah/health", nurseQueryURI)
+	nurseQueryPostURI = fmt.Sprintf("http://%s/v1/posts", nurseQueryURI)
 }
 
 func init() {
@@ -83,12 +83,12 @@ func main() {
 
 	ensureBucket()
 
-	stage0 := amqpConsume()
-
 	go func() {
-		for msg := range stage0 {
-			log.Println(msg)
+		stage1 := Pipeline(amqpConsume(), FetchFirstPageStage)
+		stage2 := Pipeline(stage1, FetchAllPagesStage)
+		stage3 := Pipeline(stage2, SaveToQueryServer)
 
+		for range stage3 {
 		}
 	}()
 
@@ -96,6 +96,64 @@ func main() {
 
 	wait := make(chan bool)
 	<-wait
+}
+
+func amqpConsume() <-chan *TagPage {
+	msgs, err := amqpChannel.Consume(
+		nurseQueue.Name, // queue
+		"",              // consumer
+		true,            // auto-ack
+		false,           // exclusive
+		false,           // no-local
+		false,           // no-wait
+		nil,             // args
+	)
+	failOnError(err, "Failed to register a consumer")
+
+	out := make(chan *TagPage)
+
+	go func() {
+		for d := range msgs {
+			data := NurseFetchTask{}
+			json.Unmarshal(d.Body, &data)
+
+			tagPage := NewTagPage(data.Domain, data.Tag)
+
+			log.Printf("Received a message: %#v", tagPage)
+			out <- tagPage
+		}
+	}()
+
+	return out
+}
+
+func readFromMinio(filename string) ([]byte, error) {
+	obj, err := minioClient.GetObject(bucketName, filename, minio.GetObjectOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return ioutil.ReadAll(obj)
+
+}
+
+func writeToMinio(filename string, data []byte) error {
+	_, err := minioClient.PutObject(
+		bucketName,
+		filename,
+		bytes.NewReader(data),
+		int64(len(data)),
+		minio.PutObjectOptions{ContentType: "application/json"},
+	)
+	return err
+}
+
+func ensureBucket() {
+	exists, err := minioClient.BucketExists(bucketName)
+	failOnError(err, "Failed to check bucket")
+	if !exists {
+		err = minioClient.MakeBucket(bucketName, "hell")
+		failOnError(err, "Failed to create bucket")
+	}
 }
 
 func failOnError(err error, msg string) {
@@ -110,53 +168,4 @@ func ensureEnv(key string) string {
 		log.Fatalf("Environment variable %s missing.", key)
 	}
 	return value
-}
-
-func ensureBucket() {
-	exists, err := minioClient.BucketExists(bucketName)
-	failOnError(err, "Failed to check bucket")
-	if !exists {
-		err = minioClient.MakeBucket(bucketName, "hell")
-		failOnError(err, "Failed to create bucket")
-	}
-}
-
-func amqpConsume() <-chan NurseFetchTask {
-	msgs, err := amqpChannel.Consume(
-		nurseQueue.Name, // queue
-		"",              // consumer
-		true,            // auto-ack
-		false,           // exclusive
-		false,           // no-local
-		false,           // no-wait
-		nil,             // args
-	)
-	failOnError(err, "Failed to register a consumer")
-
-	out := make(chan NurseFetchTask)
-
-	go func() {
-		for d := range msgs {
-			data := NurseFetchTask{}
-			json.Unmarshal(d.Body, &data)
-
-			tagPage := NewTagPage(data.Domain, data.Tag)
-			log.Printf("Received a message: %#v", tagPage)
-
-			out <- data
-		}
-	}()
-
-	return out
-}
-
-func writeToMinio(filename string, data []byte) error {
-	_, err := minioClient.PutObject(
-		bucketName,
-		filename,
-		bytes.NewReader(data),
-		int64(len(data)),
-		minio.PutObjectOptions{ContentType: "application/json"},
-	)
-	return err
 }

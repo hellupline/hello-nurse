@@ -6,18 +6,11 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
-)
-
-var (
-	domainURLs = map[string]DomainURL{
-		"konachan.net": KonachanURLBuilder,
-	}
 )
 
 type (
@@ -44,6 +37,12 @@ type (
 	}
 )
 
+var (
+	domainURLs = map[string]DomainURL{
+		"konachan.net": KonachanURLBuilder,
+	}
+)
+
 func NewTagPage(domain, name string) *TagPage {
 	return &TagPage{
 		Domain: domain,
@@ -62,11 +61,9 @@ func NewTagPage(domain, name string) *TagPage {
 }
 
 func (t *TagPage) Fetch() error {
-	if t.Page < 1 {
-		t.CreateCacheDir()
-	}
 	filename := t.Filename()
-	body, err := ioutil.ReadFile(filename)
+	body, err := readFromMinio(filename)
+
 	if err != nil {
 		u := t.URL().String()
 		resp, err := http.Get(u)
@@ -79,7 +76,7 @@ func (t *TagPage) Fetch() error {
 		if err != nil {
 			return err
 		}
-		err = ioutil.WriteFile(filename, body, 0660)
+		err = writeToMinio(filename, body)
 		if err != nil {
 			return err
 		}
@@ -106,15 +103,7 @@ func (t *TagPage) NextPage(page int) *TagPage {
 }
 
 func (t *TagPage) Filename() string {
-	basePath := "/data" // XXX: use envvar
-	prefix := filepath.Join(basePath, "cache", t.Domain, t.Name)
-	return filepath.Join(prefix, fmt.Sprintf("%04d.xml", t.Page))
-}
-
-func (t *TagPage) CreateCacheDir() {
-	basePath := "/data" // XXX: use envvar
-	prefix := filepath.Join(basePath, "cache", t.Domain, t.Name)
-	os.MkdirAll(prefix, os.ModePerm)
+	return filepath.Join(t.Domain, t.Name, fmt.Sprintf("%04d.xml", t.Page))
 }
 
 func (t *TagPage) URL() *url.URL {

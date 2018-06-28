@@ -1,16 +1,16 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/json"
 	"net/http"
-	"os"
 	"sync"
 
-	"github.com/hellupline/hello-nurse/nursetags"
-
 	log "github.com/sirupsen/logrus"
+)
+
+type (
+	PipelineCallback func(*TagPage, chan<- *TagPage)
 )
 
 func FetchFirstPageStage(tag *TagPage, out chan<- *TagPage) {
@@ -44,86 +44,20 @@ func FetchAllPagesStage(tag *TagPage, out chan<- *TagPage) {
 	out <- tag
 }
 
-func DatabaseInsertStage(tag *TagPage, out chan<- *TagPage) {
+func SaveToQueryServer(tag *TagPage, out chan<- *TagPage) {
 	for _, post := range tag.Posts {
-		payload, _ := json.Marshal(map[string]string{
-			"preview_url": post.PreviewURL,
-			"sample_url":  post.SampleURL,
-			"file_url":    post.FileURL,
-		})
-		nursetags.DefaultDatabase.PostCreate(nursetags.PostData{
-			PostKey: nursetags.PostKey{
-				Namespace: tag.Domain,
-				Key:       post.Key,
-			},
-			Tags:  post.Tags(),
-			Type:  "booru-image",
-			Value: string(payload),
-		})
+		log.Info("Saving Post", post.Key)
+		var buf bytes.Buffer
+		if err := json.NewEncoder(&buf).Encode(post); err != nil {
+			log.Warning("Failed to encode json", post.Key)
+		}
+		if _, err := http.Post(nurseQueryPostURI, "application/json", &buf); err != nil {
+			log.Warning("Failed to push json", post.Key)
+		}
 	}
 	out <- tag
 }
 
-// input
-func TagGenerator() chan *TagPage {
-	// tags := ReadTagsFile()
-	tags := []*TagPage{
-		NewTagPage("konachan.net", "landscape"),
-		NewTagPage("konachan.net", "moon"),
-		NewTagPage("konachan.net", "night"),
-		NewTagPage("konachan.net", "scenic"),
-		NewTagPage("konachan.net", "sky"),
-		NewTagPage("konachan.net", "star"),
-		NewTagPage("konachan.net", "sunset"),
-		NewTagPage("konachan.net", "ruins"),
-	}
-
-	out := make(chan *TagPage, len(tags))
-	go func() {
-		defer close(out)
-		for _, tag := range tags {
-			out <- tag
-		}
-	}()
-	return out
-}
-
-func ReadTagsFile() []*TagPage {
-	tags := make([]*TagPage, 0)
-
-	f, err := os.Open("./tags.txt")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer f.Close() // nolint: errcheck
-
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		tags = append(tags, NewTagPage("konachan.net", scanner.Text()))
-	}
-	return tags
-}
-
-// output
-func DatabaseUpload() {
-	log.Info("Database push started")
-	buffer := &bytes.Buffer{}
-	if err := nursetags.DefaultDatabase.Write(buffer); err != nil {
-		log.Fatal(err)
-	}
-
-	req, err := http.NewRequest("POST", uploadURL, buffer)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if _, err := http.DefaultClient.Do(req); err != nil {
-		log.Fatal(err)
-	}
-	log.Info("Database push done")
-}
-
-// pipeline control
 func Pipeline(in <-chan *TagPage, cb PipelineCallback) <-chan *TagPage {
 	out := make(chan *TagPage, 1)
 

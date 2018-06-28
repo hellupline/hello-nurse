@@ -1,0 +1,181 @@
+<html>
+    <head>
+        <title>Hello Nurse</title>
+    </head>
+    <body>
+        <div id="root"></div>
+
+        <!-- Libs -->
+        <script crossorigin src="https://unpkg.com/react@16/umd/react.production.min.js"></script>
+        <script crossorigin src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js"></script>
+        <!-- <script crossorigin src="https://unpkg.com/reactstrap@6.1.0/dist/reactstrap.min.js"></script> -->
+        <script crossorigin src="https://unpkg.com/axios@0.18.0/dist/axios.min.js"></script>
+
+        <!-- Babel -->
+        <script crossorigin src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+        <!-- Application -->
+        <script type="text/babel">
+            class Application extends React.Component {
+                render() {
+                    return (
+                        <div>
+                            <PostsController />
+                        </div>
+                    );
+                }
+            }
+
+            class PostsController extends React.Component {
+                constructor(props) {
+                    super(props);
+                    this.state = { query: '("mobile_suit_gundam" & "sky")', post_key: null};
+                }
+
+                onChangeQuery = (event) => {
+                    this.setState({ query: event.target.value });
+                }
+
+                updatePostKey = (post_key) => {
+                    this.setState({ post_key });
+                }
+
+                render() {
+                    const { query, post_key } = this.state;
+                    return (
+                        <div>
+                            <form>
+                                <textarea onChange={this.onChangeQuery} value={query} />
+                            </form>
+                            <div>query: {query}, key: {JSON.stringify(post_key, null, 4)}</div>
+
+                            <PostsDetail post_key={post_key} />
+                            <PostsIndex updatePostKey={this.updatePostKey} query={query} />
+                        </div>
+                    );
+                }
+            }
+
+            class PostsIndex extends React.Component {
+                constructor(props) {
+                    super(props);
+                    this.state = { posts: [] };
+                }
+
+                componentDidMount() {
+                    this.fetchPosts();
+                }
+
+                componentDidUpdate(prevProps) {
+                    if (prevProps.query != this.props.query) {
+                        // XXX: cancel previous promisse
+                        this.fetchPosts();
+                    }
+                }
+
+                onClickShowPost = (event, post) => {
+                    const { updatePostKey } = this.props;
+                    const { namespace, key } = post;
+                    updatePostKey({ namespace, key });
+
+                    event.preventDefault();
+                }
+
+                fetchPosts() {
+                    const { query } = this.props;
+                    if (query.length < 2) {
+                        return;
+                    }
+
+                    axios.get('http://query.hellupline.com/v1/posts', { params: { q: query } })
+                        .catch(error => { console.error(error); })
+                        .then(response => {
+                            const { posts } = response.data;
+                            return posts;
+                        })
+                        .then(posts => posts.map(post => ({
+                                ...post, value: JSON.parse(post.value),
+                        })))
+                        .then(posts => { this.setState({ posts }); });
+                }
+
+                render() {
+                    const { posts } = this.state;
+                    return (
+                        <div>
+                            result:
+                            <ul>
+                                {posts.map(post => <PostIndexItem post={post} onClick={this.onClickShowPost} />)}
+                            </ul>
+                        </div>
+                    );
+                }
+            }
+
+            function PostIndexItem({ post, onClick }) {
+                return (
+                    <li>
+                        <a href="#" onClick={e => onClick(e, post)}>
+                            <img src={`https:${post.value.preview_url}`} />
+                        </a>
+                        <ul>
+                            {post.tags.map(tag => <li>{tag}</li>)}
+                        </ul>
+                    </li>
+                )
+            }
+
+            class PostsDetail extends React.Component {
+                constructor(props) {
+                    super(props);
+                    this.state = { post: {} };
+                }
+
+                componentDidMount() {
+                    this.fetchPost();
+                }
+
+                componentDidUpdate(prevProps) {
+                    if ( prevProps.post_key !== this.props.post_key ) {
+                        this.fetchPost();
+                    }
+                }
+
+                fetchPost() {
+                    const { post_key } = this.props;
+                    if ( post_key == null ) {
+                        return;
+                    }
+                    const { namespace, key } = post_key;
+
+                    axios.get(`http://query.hellupline.com/v1/posts/${namespace}/${key}`)
+                        .catch(error => { console.error(error); })
+                        .then(response => {
+                            const { post } = response.data;
+                            return post
+                        })
+                        .then(post => ({
+                            ...post, value: JSON.parse(post.value),
+                        }))
+                        .then(post => { this.setState({ post }); })
+                }
+
+                render() {
+                    const { post_key } = this.props;
+                    const { post } = this.state;
+                    if ( post_key === null || post.value === undefined) {
+                        return null;
+                    }
+                    return (
+                        <div>
+                            img src={`https:${post.value.sample_url}`} /
+                            https:{post.value.sample_url}
+                        </div>
+                    )
+                }
+            }
+
+            ReactDOM.render(<Application />, document.getElementById('root'));
+        </script>
+    </body>
+</html>

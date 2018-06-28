@@ -43,7 +43,7 @@ services:
     networks:
       - frontend
     expose:
-      - '8080'
+      - '80'
     depends_on:
       - nursequery
 

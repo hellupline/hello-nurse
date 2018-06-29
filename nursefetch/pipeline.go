@@ -67,10 +67,12 @@ func SaveToQueryServer(tag *TagPage, out chan<- *TagPage) {
 		var buf bytes.Buffer
 
 		if err := json.NewEncoder(&buf).Encode(obj); err != nil {
-			log.Warning("Failed to encode json", post.Key)
+			log.WithFields(log.Fields{"key": post.Key}).Warning("Failed to encode json")
 		}
-		if _, err := http.Post(nurseQueryPostURI, "application/json", &buf); err != nil {
-			log.Warning("Failed to push json", post.Key)
+		if response, err := http.Post(nurseQueryPostURI, "application/json", &buf); err != nil {
+			log.WithFields(log.Fields{"key": post.Key}).Warningf("Failed to push json")
+		} else {
+			defer response.Body.Close()
 		}
 	}
 	out <- tag

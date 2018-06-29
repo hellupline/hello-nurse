@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"time"
 
 	"github.com/minio/minio-go"
 	log "github.com/sirupsen/logrus"
@@ -33,8 +32,6 @@ var (
 	nurseQueue     amqp.Queue
 
 	minioClient *minio.Client
-
-	retryDelay time.Duration = 10
 )
 
 func init() {
@@ -65,7 +62,7 @@ func init() {
 
 	nurseQueue, err = amqpChannel.QueueDeclare(
 		nurseFetchQueue, // name
-		false,           // durable
+		true,            // durable
 		false,           // delete when unused
 		false,           // exclusive
 		false,           // no-wait

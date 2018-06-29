@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -22,10 +23,41 @@ type (
 )
 
 var (
+	rabbitmqUser, rabbitmqPass, rabbitmqURI string
+	nurseFetchQueue                         string
+
 	amqpConnection *amqp.Connection
 	amqpChannel    *amqp.Channel
 	nurseQueue     amqp.Queue
 )
+
+func init() {
+	rabbitmqUser = ensureEnv("RABBITMQ_DEFAULT_USER")
+	rabbitmqPass = ensureEnv("RABBITMQ_DEFAULT_PASS")
+	rabbitmqURI = ensureEnv("RABBITMQ_URI")
+
+	nurseFetchQueue = ensureEnv("NURSEFETCH_QUEUE")
+}
+
+func init() {
+	var err error
+
+	amqpConnection, err = amqp.Dial("amqp://nurse:animaniacs@rabbitmq:5672/")
+	failOnError(err, "Failed to connect to RabbitMQ")
+
+	amqpChannel, err = amqpConnection.Channel()
+	failOnError(err, "Failed to open a channel")
+
+	nurseQueue, err = amqpChannel.QueueDeclare(
+		nurseFetchQueue, // name
+		true,            // durable
+		false,           // delete when unused
+		false,           // exclusive
+		false,           // no-wait
+		nil,             // arguments
+	)
+	failOnError(err, "Failed to declare a queue")
+}
 
 func init() {
 	router := gin.Default()
@@ -74,25 +106,8 @@ func init() {
 }
 
 func main() {
-	var err error
-
-	amqpConnection, err = amqp.Dial("amqp://nurse:animaniacs@rabbitmq:5672/")
-	failOnError(err, "Failed to connect to RabbitMQ")
 	defer amqpConnection.Close()
-
-	amqpChannel, err = amqpConnection.Channel()
-	failOnError(err, "Failed to open a channel")
 	defer amqpChannel.Close()
-
-	nurseQueue, err = amqpChannel.QueueDeclare(
-		"nurse-fetch", // name
-		false,         // durable
-		false,         // delete when unused
-		false,         // exclusive
-		false,         // no-wait
-		nil,           // arguments
-	)
-	failOnError(err, "Failed to declare a queue")
 
 	appengine.Main()
 }
@@ -101,6 +116,14 @@ func failOnError(err error, msg string) {
 	if err != nil {
 		log.Fatalf("%s: %s", msg, err)
 	}
+}
+
+func ensureEnv(key string) string {
+	value, ok := os.LookupEnv(key)
+	if !ok {
+		log.Fatalf("Environment variable %s missing.", key)
+	}
+	return value
 }
 
 func bindErrorResponse(err error) map[string][]string {
@@ -135,8 +158,9 @@ func HttpHandleBooruFetch(c *gin.Context) {
 		false,           // mandatory
 		false,           // immediate
 		amqp.Publishing{
-			ContentType: "application/json",
-			Body:        body,
+			ContentType:  "application/json",
+			DeliveryMode: 2,
+			Body:         body,
 		})
 	failOnError(err, "Failed to publish a message")
 

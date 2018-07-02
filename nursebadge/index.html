@@ -1,5 +1,7 @@
 <html>
     <head>
+        <link crossorigin rel="stylesheet" href="https://unpkg.com/bootstrap@4.1.1/dist/css/bootstrap.min.css">
+
         <title>Hello Nurse</title>
     </head>
     <body>
@@ -8,7 +10,15 @@
         <!-- Libs -->
         <script crossorigin src="https://unpkg.com/react@16/umd/react.production.min.js"></script>
         <script crossorigin src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js"></script>
-        <!-- <script crossorigin src="https://unpkg.com/reactstrap@6.1.0/dist/reactstrap.min.js"></script> -->
+        <script crossorigin src="https://unpkg.com/prop-types@15.6.2/prop-types.min.js"></script>
+        <script crossorigin src="https://unpkg.com/react-lifecycles-compat@3.0.4/react-lifecycles-compat.min.js"></script>
+
+        <script crossorigin src="https://unpkg.com/classnames@2.2.6/index.js"></script>
+        <script crossorigin src="https://unpkg.com/popper.js@1.14.3/dist/umd/popper.min.js"></script>
+        <script crossorigin src="https://unpkg.com/react-popper@1.0.0/dist/index.umd.min.js"></script>
+        <script crossorigin src="https://unpkg.com/react-transition-group@2.4.0/dist/react-transition-group.min.js"></script>
+        <script crossorigin src="https://unpkg.com/reactstrap@6.2.0/dist/reactstrap.min.js"></script>
+
         <script crossorigin src="https://unpkg.com/axios@0.18.0/dist/axios.min.js"></script>
 
         <!-- Babel -->
@@ -29,29 +39,72 @@
             class PostsController extends React.Component {
                 constructor(props) {
                     super(props);
-                    this.state = { query: '("mobile_suit_gundam" & "sky")', post_key: null};
+                    this.state = {
+                        query: '("mobile_suit_gundam" & "sky") | "eureka_seven" ^ "angel" ^ "touhou"',
+                        selected_posts: [],
+                    };
                 }
 
                 onChangeQuery = (event) => {
                     this.setState({ query: event.target.value });
                 }
 
-                updatePostKey = (post_key) => {
-                    this.setState({ post_key });
+                onClickDownloadPosts = (event) => {
+                    for ( let post of this.state.selected_posts ) {
+                        // XXX: http fetch download task
+                        console.log(post)
+                    }
+                    event.preventDefault();
+                }
+
+                onClickPlayPosts = (event) => {
+                    // XXX: open modal with carrocel of images, use keyboard
+                    console.log("Play")
+                    event.preventDefault();
+                }
+
+                onClickClearPosts = (event) => {
+                    this.setState({ selected_posts: [] });
+                    event.preventDefault();
+                }
+
+                addPost = (post) => {
+                    const selected_posts = [...new Set([...this.state.selected_posts, post])];
+                    this.setState({ selected_posts });
                 }
 
                 render() {
-                    const { query, post_key } = this.state;
+                    const { query, selected_posts } = this.state;
                     return (
-                        <div>
-                            <form>
-                                <textarea onChange={this.onChangeQuery} value={query} />
-                            </form>
-                            <div>query: {query}, key: {JSON.stringify(post_key, null, 4)}</div>
+                        <Reactstrap.Container fluid>
+                            <Reactstrap.Row>
+                                <Reactstrap.Col sm="9">
+                                    <Reactstrap.Form>
+                                        <Reactstrap.FormGroup>
+                                          <Reactstrap.Input onChange={this.onChangeQuery} value={query} type="textarea" name="query" id="queryField" />
+                                        </Reactstrap.FormGroup>
+                                    </Reactstrap.Form>
+                                </Reactstrap.Col>
+                                <Reactstrap.Col sm="3">
+                                    <Reactstrap.ButtonToolbar>
+                                        <Reactstrap.ButtonGroup>
+                                            <Reactstrap.Button color="primary" onClick={this.onClickDownloadPosts}>Download</Reactstrap.Button>
+                                            <Reactstrap.Button color="success" onClick={this.onClickPlayPosts}>Play</Reactstrap.Button>
+                                            <Reactstrap.Button color="danger" onClick={this.onClickClearPosts}>Clear</Reactstrap.Button>
+                                        </Reactstrap.ButtonGroup>
+                                    </Reactstrap.ButtonToolbar>
+                                </Reactstrap.Col>
+                            </Reactstrap.Row>
+                            <Reactstrap.Row>
+                                <Reactstrap.Col sm="9">
+                                    <PostsIndex addPost={this.addPost} query={query} />
+                                </Reactstrap.Col>
+                                <Reactstrap.Col sm="3">
+                                    <ul> {selected_posts.map(post => (<li>{post.namespace}, {post.key}</li>))} </ul>
+                                </Reactstrap.Col>
+                            </Reactstrap.Row>
 
-                            <PostsDetail post_key={post_key} />
-                            <PostsIndex updatePostKey={this.updatePostKey} query={query} />
-                        </div>
+                        </Reactstrap.Container>
                     );
                 }
             }
@@ -73,10 +126,10 @@
                     }
                 }
 
-                onClickShowPost = (event, post) => {
-                    const { updatePostKey } = this.props;
-                    const { namespace, key } = post;
-                    updatePostKey({ namespace, key });
+                onClickAddPost = (event, post) => {
+                    const { addPost } = this.props;
+
+                    addPost(post);
 
                     event.preventDefault();
                 }
@@ -102,25 +155,17 @@
                 render() {
                     const { posts } = this.state;
                     return (
-                        <div>
-                            result:
-                            <ul>
-                                {posts.map(post => <PostIndexItem post={post} onClick={this.onClickShowPost} />)}
-                            </ul>
-                        </div>
+                        <ul> {posts.map(post => <PostIndexItem post={post} onClick={this.onClickAddPost} />)} </ul>
                     );
                 }
             }
 
             function PostIndexItem({ post, onClick }) {
                 return (
-                    <li>
+                    <li style={{"display": "inline-block"}}>
                         <a href="#" onClick={e => onClick(e, post)}>
-                            <img src={`https:${post.value.preview_url}`} />
+                            <img src={`https:${post.value.preview_url}`} alt={post.tags.join(" ")} title={post.tags.join(" ")} />
                         </a>
-                        <ul>
-                            {post.tags.map(tag => <li>{tag}</li>)}
-                        </ul>
                     </li>
                 )
             }
@@ -136,17 +181,15 @@
                 }
 
                 componentDidUpdate(prevProps) {
-                    if ( prevProps.post_key !== this.props.post_key ) {
+                    if ( prevProps.namespace !== this.props.namespace || prevProps.key !== this.props.key ) {
                         this.fetchPost();
                     }
                 }
 
                 fetchPost() {
-                    const { post_key } = this.props;
-                    if ( post_key == null ) {
-                        return;
-                    }
-                    const { namespace, key } = post_key;
+                    const { namespace, key } = this.props;
+                    if ( key == null ) return;
+
 
                     axios.get(`http://query.hellupline.com/v1/posts/${namespace}/${key}`)
                         .catch(error => { console.error(error); })
@@ -161,11 +204,11 @@
                 }
 
                 render() {
-                    const { post_key } = this.props;
+                    const { namespace, key } = this.props;
                     const { post } = this.state;
-                    if ( post_key === null || post.value === undefined) {
-                        return null;
-                    }
+
+                    if ( (key === null || namespace === null) || post.value === undefined) return null;
+
                     return (
                         <div>
                             img src={`https:${post.value.sample_url}`} /

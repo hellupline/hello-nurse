@@ -3,11 +3,11 @@ services:
   nursequery:
     labels:
       - traefik.frontend.rule=Host:query.hellupline.com
-    image: hellupline/nursequery
-    env_file: development.env
     build:
       dockerfile: Dockerfile
       context: ./nursequery/
+    image: hellupline/nursequery
+    env_file: development.env
     restart: always
     networks:
       - frontend
@@ -19,11 +19,11 @@ services:
       - traefik
 
   nursefetch:
-    image: hellupline/nursefetch
-    env_file: development.env
     build:
       dockerfile: Dockerfile
       context: ./nursefetch/
+    image: hellupline/nursefetch
+    env_file: development.env
     restart: always
     networks:
       - backend
@@ -34,16 +34,18 @@ services:
   nursebadge:
     labels:
       - traefik.frontend.rule=Host:www.hellupline.com
-    image: hellupline/nursebadge
-    env_file: development.env
     build:
       dockerfile: Dockerfile
       context: ./nursebadge/
+    image: hellupline/nursebadge
+    env_file: development.env
     restart: always
     networks:
       - frontend
     expose:
       - '80'
+    volumes:
+      - './nursebadge/:/usr/share/nginx/html/'
     depends_on:
       - nursequery
 

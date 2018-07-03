@@ -31,6 +31,19 @@ services:
       - rabbitmq
       - traefik
 
+  nursedownload:
+    build:
+      dockerfile: Dockerfile
+      context: ./nursedownload/
+    image: hellupline/nursedownload
+    env_file: development.env
+    restart: always
+    networks:
+      - backend
+    depends_on:
+      - rabbitmq
+      - traefik
+
   nursebadge:
     labels:
       - traefik.frontend.rule=Host:www.hellupline.com

@@ -1,4 +1,4 @@
-package main
+package main // import "github.com/hellupline/hello-nurse/nursefetch"
 
 import (
 	"bytes"
@@ -23,8 +23,9 @@ var (
 	rabbitmqUser, rabbitmqPass, rabbitmqURI  string
 	minioAccessKey, minioSecretKey, minioURI string
 	minioUseSSL                              bool
-	nurseQueryPostURI, nurseFetchQueue       string
+	nurseQueryPostURI                        string
 
+	queueName  = "nurse-fetch"
 	bucketName = "response-data"
 
 	amqpConnection *amqp.Connection
@@ -46,8 +47,6 @@ func init() {
 	minioUseSSL = minioUseSSLRaw == "true"
 
 	nurseQueryURI := ensureEnv("NURSEQUERY_URI")
-	nurseFetchQueue = ensureEnv("NURSEFETCH_QUEUE")
-
 	nurseQueryPostURI = fmt.Sprintf("http://%s/v1/posts", nurseQueryURI)
 }
 
@@ -61,12 +60,12 @@ func init() {
 	failOnError(err, "Failed to open a channel")
 
 	nurseQueue, err = amqpChannel.QueueDeclare(
-		nurseFetchQueue, // name
-		true,            // durable
-		false,           // delete when unused
-		false,           // exclusive
-		false,           // no-wait
-		nil,             // arguments
+		queueName, // name
+		true,      // durable
+		false,     // delete when unused
+		false,     // exclusive
+		false,     // no-wait
+		nil,       // arguments
 	)
 	failOnError(err, "Failed to declare a queue")
 

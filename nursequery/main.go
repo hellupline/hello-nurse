@@ -20,23 +20,28 @@ type (
 		Domain string `json:"domain" binding:"required"`
 		Tag    string `json:"tag" binding:"required"`
 	}
+	NurseDownloadTask struct {
+		Domain string `json:"domain" binding:"required"`
+		URL    string `json:"url" binding:"required"`
+	}
 )
 
 var (
 	rabbitmqUser, rabbitmqPass, rabbitmqURI string
-	nurseFetchQueue                         string
 
-	amqpConnection *amqp.Connection
-	amqpChannel    *amqp.Channel
-	nurseQueue     amqp.Queue
+	nurseFetchQueueName    = "nurse-fetch"
+	nurseDownloadQueueName = "nurse-download"
+
+	amqpConnection     *amqp.Connection
+	amqpChannel        *amqp.Channel
+	nurseFetchQueue    amqp.Queue
+	nurseDownloadQueue amqp.Queue
 )
 
 func init() {
 	rabbitmqUser = ensureEnv("RABBITMQ_DEFAULT_USER")
 	rabbitmqPass = ensureEnv("RABBITMQ_DEFAULT_PASS")
 	rabbitmqURI = ensureEnv("RABBITMQ_URI")
-
-	nurseFetchQueue = ensureEnv("NURSEFETCH_QUEUE")
 }
 
 func init() {
@@ -48,13 +53,23 @@ func init() {
 	amqpChannel, err = amqpConnection.Channel()
 	failOnError(err, "Failed to open a channel")
 
-	nurseQueue, err = amqpChannel.QueueDeclare(
-		nurseFetchQueue, // name
-		true,            // durable
-		false,           // delete when unused
-		false,           // exclusive
-		false,           // no-wait
-		nil,             // arguments
+	nurseFetchQueue, err = amqpChannel.QueueDeclare(
+		nurseFetchQueueName, // name
+		true,                // durable
+		false,               // delete when unused
+		false,               // exclusive
+		false,               // no-wait
+		nil,                 // arguments
+	)
+	failOnError(err, "Failed to declare a queue")
+
+	nurseDownloadQueue, err = amqpChannel.QueueDeclare(
+		nurseDownloadQueueName, // name
+		true,  // durable
+		false, // delete when unused
+		false, // exclusive
+		false, // no-wait
+		nil,   // arguments
 	)
 	failOnError(err, "Failed to declare a queue")
 }
@@ -95,9 +110,10 @@ func init() {
 			datasetGroup.POST("/upload/gob", HttpHandleDatasetUploadGOB)
 		}
 
-		fetchGroup := v1Group.Group("/tasks/nurse-fetch")
+		fetchGroup := v1Group.Group("/tasks")
 		{
-			fetchGroup.POST("", HttpHandleBooruFetch)
+			fetchGroup.POST("/nurse-fetch", HttpHandleBooruFetch)
+			fetchGroup.POST("/nurse-download", HttpHandleBooruDownload)
 		}
 	}
 
@@ -153,10 +169,40 @@ func HttpHandleBooruFetch(c *gin.Context) {
 	failOnError(err, "Failed to marshal a message")
 
 	err = amqpChannel.Publish(
-		"",              // exchange
-		nurseQueue.Name, // routing key
-		false,           // mandatory
-		false,           // immediate
+		"",                   // exchange
+		nurseFetchQueue.Name, // routing key
+		false,                // mandatory
+		false,                // immediate
+		amqp.Publishing{
+			ContentType:  "application/json",
+			DeliveryMode: 2,
+			Body:         body,
+		})
+	failOnError(err, "Failed to publish a message")
+
+	log.Printf("[x] Sent %s", string(body))
+
+	c.JSON(http.StatusOK, gin.H{"success": "ok"})
+}
+
+func HttpHandleBooruDownload(c *gin.Context) {
+	payload := NurseDownloadTask{}
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{
+			"errors": bindErrorResponse(err),
+			"result": "error",
+		})
+		return
+	}
+
+	body, err := json.Marshal(payload)
+	failOnError(err, "Failed to marshal a message")
+
+	err = amqpChannel.Publish(
+		"", // exchange
+		nurseDownloadQueue.Name, // routing key
+		false, // mandatory
+		false, // immediate
 		amqp.Publishing{
 			ContentType:  "application/json",
 			DeliveryMode: 2,

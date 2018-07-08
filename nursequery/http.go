@@ -112,7 +112,3 @@ func HttpHandleDatasetUploadGOB(c *gin.Context) {
 func HttpHandleDatasetDownloadGOB(c *gin.Context) {
 	_ = nursetags.DefaultDatabase.Write(c.Writer)
 }
-
-func HttpHandleHealthCheck(c *gin.Context) {
-	c.String(http.StatusOK, "ok")
-}

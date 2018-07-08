@@ -1,18 +1,16 @@
 package main // import "github.com/hellupline/hello-nurse/nursequery"
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
-	"os"
+	"os/user"
+	"path/filepath"
 
 	"github.com/gin-contrib/cors"
+	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator"
-	"github.com/streadway/amqp"
-
-	"google.golang.org/appengine"
 )
 
 type (
@@ -20,6 +18,7 @@ type (
 		Domain string `json:"domain" binding:"required"`
 		Tag    string `json:"tag" binding:"required"`
 	}
+
 	NurseDownloadTask struct {
 		Domain string `json:"domain" binding:"required"`
 		URL    string `json:"url" binding:"required"`
@@ -27,61 +26,27 @@ type (
 )
 
 var (
-	rabbitmqUser, rabbitmqPass, rabbitmqURI string
+	booruFetchStage0    = make(chan *TagPage, 100)
+	booruDownloadStage0 = make(chan *NurseDownloadTask, 100)
 
-	nurseFetchQueueName    = "nurse-fetch"
-	nurseDownloadQueueName = "nurse-download"
-
-	amqpConnection     *amqp.Connection
-	amqpChannel        *amqp.Channel
-	nurseFetchQueue    amqp.Queue
-	nurseDownloadQueue amqp.Queue
+	baseDir string
 )
 
 func init() {
-	rabbitmqUser = ensureEnv("RABBITMQ_DEFAULT_USER")
-	rabbitmqPass = ensureEnv("RABBITMQ_DEFAULT_PASS")
-	rabbitmqURI = ensureEnv("RABBITMQ_URI")
+	u, err := user.Current()
+	if err != nil {
+		log.Fatal(err)
+	}
+	baseDir = filepath.Join(u.HomeDir, ".booru")
 }
 
-func init() {
-	var err error
+func main() {
+	r := gin.Default()
 
-	amqpConnection, err = amqp.Dial("amqp://nurse:animaniacs@rabbitmq:5672/")
-	failOnError(err, "Failed to connect to RabbitMQ")
+	r.Use(static.Serve("/files", static.LocalFile(filepath.Join(baseDir, "files"), true)))
+	r.Use(cors.Default())
 
-	amqpChannel, err = amqpConnection.Channel()
-	failOnError(err, "Failed to open a channel")
-
-	nurseFetchQueue, err = amqpChannel.QueueDeclare(
-		nurseFetchQueueName, // name
-		true,                // durable
-		false,               // delete when unused
-		false,               // exclusive
-		false,               // no-wait
-		nil,                 // arguments
-	)
-	failOnError(err, "Failed to declare a queue")
-
-	nurseDownloadQueue, err = amqpChannel.QueueDeclare(
-		nurseDownloadQueueName, // name
-		true,  // durable
-		false, // delete when unused
-		false, // exclusive
-		false, // no-wait
-		nil,   // arguments
-	)
-	failOnError(err, "Failed to declare a queue")
-}
-
-func init() {
-	router := gin.Default()
-
-	http.Handle("/", router)
-
-	router.Use(cors.Default())
-
-	v1Group := router.Group("/v1")
+	v1Group := r.Group("/v1")
 	{
 		favoritesGroup := v1Group.Group("/favorites")
 		{
@@ -117,29 +82,28 @@ func init() {
 		}
 	}
 
-	router.GET("/", HttpHandleHealthCheck)
-	router.GET("/_ah/health", HttpHandleHealthCheck)
-}
+	r.GET("/", HttpHandleHealthCheck)
+	r.GET("/_ah/health", HttpHandleHealthCheck)
 
-func main() {
-	defer amqpConnection.Close()
-	defer amqpChannel.Close()
+	go func() {
+		stage1 := BooruFetchPipeline(booruFetchStage0, FetchFirstPageStage)
+		stage2 := BooruFetchPipeline(stage1, FetchAllPagesStage)
+		stage3 := BooruFetchPipeline(stage2, SaveToQueryServer)
 
-	appengine.Main()
-}
+		for range stage3 {
+			// XXX: Log completes
+		}
+	}()
 
-func failOnError(err error, msg string) {
-	if err != nil {
-		log.Fatalf("%s: %s", msg, err)
-	}
-}
+	go func() {
+		stage1 := BooruDownloadPipeline(booruDownloadStage0, DownloadFile)
 
-func ensureEnv(key string) string {
-	value, ok := os.LookupEnv(key)
-	if !ok {
-		log.Fatalf("Environment variable %s missing.", key)
-	}
-	return value
+		for range stage1 {
+			// XXX: Log completes
+		}
+	}()
+
+	r.Run()
 }
 
 func bindErrorResponse(err error) map[string][]string {
@@ -155,9 +119,13 @@ func bindErrorResponse(err error) map[string][]string {
 	return errors
 }
 
+func HttpHandleHealthCheck(c *gin.Context) {
+	c.String(http.StatusOK, "ok")
+}
+
 func HttpHandleBooruFetch(c *gin.Context) {
-	payload := NurseFetchTask{}
-	if err := c.ShouldBindJSON(&payload); err != nil {
+	task := NurseFetchTask{}
+	if err := c.ShouldBindJSON(&task); err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{
 			"errors": bindErrorResponse(err),
 			"result": "error",
@@ -165,29 +133,14 @@ func HttpHandleBooruFetch(c *gin.Context) {
 		return
 	}
 
-	body, err := json.Marshal(payload)
-	failOnError(err, "Failed to marshal a message")
-
-	err = amqpChannel.Publish(
-		"",                   // exchange
-		nurseFetchQueue.Name, // routing key
-		false,                // mandatory
-		false,                // immediate
-		amqp.Publishing{
-			ContentType:  "application/json",
-			DeliveryMode: 2,
-			Body:         body,
-		})
-	failOnError(err, "Failed to publish a message")
-
-	log.Printf("[x] Sent %s", string(body))
+	booruFetchStage0 <- NewTagPage(task.Domain, task.Tag)
 
 	c.JSON(http.StatusOK, gin.H{"success": "ok"})
 }
 
 func HttpHandleBooruDownload(c *gin.Context) {
-	payload := NurseDownloadTask{}
-	if err := c.ShouldBindJSON(&payload); err != nil {
+	task := NurseDownloadTask{}
+	if err := c.ShouldBindJSON(&task); err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{
 			"errors": bindErrorResponse(err),
 			"result": "error",
@@ -195,22 +148,7 @@ func HttpHandleBooruDownload(c *gin.Context) {
 		return
 	}
 
-	body, err := json.Marshal(payload)
-	failOnError(err, "Failed to marshal a message")
-
-	err = amqpChannel.Publish(
-		"", // exchange
-		nurseDownloadQueue.Name, // routing key
-		false, // mandatory
-		false, // immediate
-		amqp.Publishing{
-			ContentType:  "application/json",
-			DeliveryMode: 2,
-			Body:         body,
-		})
-	failOnError(err, "Failed to publish a message")
-
-	log.Printf("[x] Sent %s", string(body))
+	booruDownloadStage0 <- &task
 
 	c.JSON(http.StatusOK, gin.H{"success": "ok"})
 }

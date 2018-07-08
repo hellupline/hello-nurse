@@ -15,33 +15,6 @@ services:
     expose:
       - '8080'
     depends_on:
-      - rabbitmq
-      - traefik
-
-  nursefetch:
-    build:
-      dockerfile: Dockerfile
-      context: ./nursefetch/
-    image: hellupline/nursefetch
-    env_file: development.env
-    restart: always
-    networks:
-      - backend
-    depends_on:
-      - rabbitmq
-      - traefik
-
-  nursedownload:
-    build:
-      dockerfile: Dockerfile
-      context: ./nursedownload/
-    image: hellupline/nursedownload
-    env_file: development.env
-    restart: always
-    networks:
-      - backend
-    depends_on:
-      - rabbitmq
       - traefik
 
   nursebadge:
@@ -61,33 +34,6 @@ services:
       - './nursebadge/:/usr/share/nginx/html/'
     depends_on:
       - nursequery
-
-  rabbitmq:
-    labels:
-      - traefik.frontend.rule=Host:rabbitmq.hellupline.com
-      - traefik.port=15672
-    image: rabbitmq:3.7-management-alpine
-    env_file: development.env
-    restart: always
-    networks:
-      - backend
-    expose:
-      - '15672'
-      - '5672'
-
-  minio:
-    labels:
-      - traefik.frontend.rule=Host:minio.hellupline.com
-    image: minio/minio
-    env_file: development.env
-    command: server data
-    restart: always
-    networks:
-      - backend
-    expose:
-      - '9000'
-    volumes:
-      - minio_data:/data
 
   traefik:
     labels:

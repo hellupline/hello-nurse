@@ -7,6 +7,8 @@ import (
 	"os/user"
 	"path/filepath"
 
+	"github.com/hellupline/hello-nurse/nursetags"
+
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
@@ -14,20 +16,22 @@ import (
 )
 
 type (
-	NurseFetchTask struct {
-		Domain string `json:"domain" binding:"required"`
-		Tag    string `json:"tag" binding:"required"`
-	}
-
 	NurseDownloadTask struct {
 		Domain string `json:"domain" binding:"required"`
 		URL    string `json:"url" binding:"required"`
+	}
+
+	NurseFetchTask struct {
+		Domain string `json:"domain" binding:"required"`
+		Tag    string `json:"tag" binding:"required"`
 	}
 )
 
 var (
 	booruFetchStage0    = make(chan *TagPage, 100)
 	booruDownloadStage0 = make(chan *NurseDownloadTask, 100)
+
+	database = nursetags.Database{}
 
 	baseDir string
 )
@@ -48,19 +52,6 @@ func main() {
 
 	v1Group := r.Group("/v1")
 	{
-		favoritesGroup := v1Group.Group("/favorites")
-		{
-			favoritesGroup.GET("/:key", HttpHandleFavoriteRead)
-			favoritesGroup.DELETE("/:key", HttpHandleFavoriteDelete)
-			favoritesGroup.GET("", HttpHandleFavoriteIndex)
-			favoritesGroup.POST("", HttpHandleFavoriteCreate)
-		}
-
-		tagsGroup := v1Group.Group("/tags")
-		{
-			tagsGroup.GET("", HttpHandleTagsIndex)
-		}
-
 		postsGroup := v1Group.Group("/posts")
 		{
 			postsGroup.GET("/:namespace/:key", HttpHandlePostRead)
@@ -69,16 +60,15 @@ func main() {
 			postsGroup.POST("", HttpHandlePostCreate)
 		}
 
-		datasetGroup := v1Group.Group("/dataset")
+		tagsGroup := v1Group.Group("/tags")
 		{
-			datasetGroup.GET("/download/gob", HttpHandleDatasetDownloadGOB)
-			datasetGroup.POST("/upload/gob", HttpHandleDatasetUploadGOB)
+			tagsGroup.GET("", HttpHandleTagsIndex)
 		}
 
 		fetchGroup := v1Group.Group("/tasks")
 		{
-			fetchGroup.POST("/nurse-fetch", HttpHandleBooruFetch)
 			fetchGroup.POST("/nurse-download", HttpHandleBooruDownload)
+			fetchGroup.POST("/nurse-fetch", HttpHandleBooruFetch)
 		}
 	}
 
@@ -86,19 +76,19 @@ func main() {
 	r.GET("/_ah/health", HttpHandleHealthCheck)
 
 	go func() {
-		stage1 := BooruFetchPipeline(booruFetchStage0, FetchFirstPageStage)
-		stage2 := BooruFetchPipeline(stage1, FetchAllPagesStage)
-		stage3 := BooruFetchPipeline(stage2, SaveToQueryServer)
+		stage1 := BooruDownloadPipeline(booruDownloadStage0, DownloadFile)
 
-		for range stage3 {
+		for range stage1 {
 			// XXX: Log completes
 		}
 	}()
 
 	go func() {
-		stage1 := BooruDownloadPipeline(booruDownloadStage0, DownloadFile)
+		stage1 := BooruFetchPipeline(booruFetchStage0, FetchFirstPageStage)
+		stage2 := BooruFetchPipeline(stage1, FetchAllPagesStage)
+		stage3 := BooruFetchPipeline(stage2, SaveToQueryServer)
 
-		for range stage1 {
+		for range stage3 {
 			// XXX: Log completes
 		}
 	}()

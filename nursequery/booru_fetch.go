@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"sync"
 
 	"github.com/hellupline/hello-nurse/nursetags"
@@ -46,23 +45,22 @@ func FetchAllPagesStage(tag *TagPage, out chan<- *TagPage) {
 
 func SaveToQueryServer(tag *TagPage, out chan<- *TagPage) {
 	for _, post := range tag.Posts {
-		payload, _ := json.Marshal(map[string]string{
-			"preview_url": post.PreviewURL,
-			"sample_url":  post.SampleURL,
-			"file_url":    post.FileURL,
-		})
 
 		obj := nursetags.PostData{
 			PostKey: nursetags.PostKey{
 				Namespace: tag.Domain,
 				Key:       post.Key,
 			},
-			Tags:  post.Tags(),
-			Type:  "booru-image",
-			Value: string(payload),
+			Value: map[string]string{
+				"preview_url": post.PreviewURL,
+				"sample_url":  post.SampleURL,
+				"file_url":    post.FileURL,
+			},
+			Tags: post.Tags(),
+			Type: "booru-image",
 		}
 
-		nursetags.DefaultDatabase.PostCreate(obj)
+		database.PostCreate(obj)
 	}
 	out <- tag
 }

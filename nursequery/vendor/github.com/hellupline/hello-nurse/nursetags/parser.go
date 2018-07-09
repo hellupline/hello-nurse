@@ -9,7 +9,7 @@ import (
 	"go/token"
 )
 
-func (d *Database) ParseExpr(expr string) (Set, error) {
+func (d *Database) ParseExpr(expr string) (Set, error) { // nolint
 	tr, err := parser.ParseExpr(expr)
 	if err != nil {
 		return nil, err
@@ -49,18 +49,20 @@ func (d *Database) evalParenExpr(t *ast.ParenExpr) Set {
 
 func (d *Database) evalBasicLit(t *ast.BasicLit) Set {
 	key := strings.Trim(t.Value, `"'`)
-	if tag, ok := DefaultDatabase.TagRead(key); ok {
-		return Set(tag)
+	tag, ok := d.TagRead(key)
+	if !ok {
+		return NewSet()
 	}
-	return Set{}
+	return Set(tag)
 }
 
 func (d *Database) evalIdent(t *ast.Ident) Set {
 	key := t.Name
-	if tag, ok := DefaultDatabase.TagRead(key); ok {
-		return Set(tag)
+	tag, ok := d.TagRead(key)
+	if !ok {
+		return NewSet()
 	}
-	return Set{}
+	return Set(tag)
 }
 
 func repr(t ast.Expr) string {

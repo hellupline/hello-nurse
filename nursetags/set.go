@@ -1,8 +1,8 @@
 package nursetags
 
-type Set map[PostKey]struct{}
+type Set map[PostKey]struct{} // nolint
 
-func NewSet(values ...PostKey) Set {
+func NewSet(values ...PostKey) Set { // nolint
 	set := make(Set)
 	for _, value := range values {
 		set[value] = struct{}{}
@@ -10,11 +10,11 @@ func NewSet(values ...PostKey) Set {
 	return set
 }
 
-func NewSetFromSlice(values []PostKey) Set {
+func NewSetFromSlice(values []PostKey) Set { // nolint
 	return NewSet(values...)
 }
 
-func (set Set) Iter() <-chan PostKey {
+func (set Set) Iter() <-chan PostKey { // nolint
 	ch := make(chan PostKey)
 	go func() {
 		for elem := range set {
@@ -26,7 +26,7 @@ func (set Set) Iter() <-chan PostKey {
 	return ch
 }
 
-func (set Set) ToSlice() []PostKey {
+func (set Set) ToSlice() []PostKey { // nolint
 	keys := make([]PostKey, 0, len(set))
 	for elem := range set {
 		keys = append(keys, elem)
@@ -35,7 +35,7 @@ func (set Set) ToSlice() []PostKey {
 	return keys
 }
 
-func (set Set) Intersect(other Set) Set {
+func (set Set) Intersect(other Set) Set { // nolint
 	intersection := make(Set)
 	// loop over smaller set
 	if len(set) < len(other) {
@@ -54,7 +54,7 @@ func (set Set) Intersect(other Set) Set {
 	return intersection
 }
 
-func (set Set) Union(other Set) Set {
+func (set Set) Union(other Set) Set { // nolint
 	union := make(Set)
 
 	for elem := range set {
@@ -66,7 +66,7 @@ func (set Set) Union(other Set) Set {
 	return union
 }
 
-func (set Set) Difference(other Set) Set {
+func (set Set) Difference(other Set) Set { // nolint
 	difference := make(Set)
 	for elem := range set {
 		if !other.Contains(elem) {
@@ -76,13 +76,13 @@ func (set Set) Difference(other Set) Set {
 	return difference
 }
 
-func (set Set) SymmetricDifference(other Set) Set {
+func (set Set) SymmetricDifference(other Set) Set { // nolint
 	aDiff := set.Difference(other)
 	bDiff := other.Difference(set)
 	return aDiff.Union(bDiff)
 }
 
-func (set Set) Add(i PostKey) bool {
+func (set Set) Add(i PostKey) bool { // nolint
 	_, found := set[i]
 	if found {
 		return false
@@ -92,11 +92,11 @@ func (set Set) Add(i PostKey) bool {
 	return true
 }
 
-func (set Set) Remove(i PostKey) {
+func (set Set) Remove(i PostKey) { // nolint
 	delete(set, i)
 }
 
-func (set Set) Contains(i ...PostKey) bool {
+func (set Set) Contains(i ...PostKey) bool { // nolint
 	for _, val := range i {
 		if _, ok := set[val]; !ok {
 			return false
@@ -105,7 +105,7 @@ func (set Set) Contains(i ...PostKey) bool {
 	return true
 }
 
-func (set Set) Equal(other Set) bool {
+func (set Set) Equal(other Set) bool { // nolint
 	if len(set) != len(other) {
 		return false
 	}
@@ -117,7 +117,7 @@ func (set Set) Equal(other Set) bool {
 	return true
 }
 
-func (set Set) IsSubset(other Set) bool {
+func (set Set) IsSubset(other Set) bool { // nolint
 	for elem := range set {
 		if !other.Contains(elem) {
 			return false
@@ -126,14 +126,14 @@ func (set Set) IsSubset(other Set) bool {
 	return true
 }
 
-func (set Set) IsProperSubset(other Set) bool {
+func (set Set) IsProperSubset(other Set) bool { // nolint
 	return set.IsSubset(other) && !set.Equal(other)
 }
 
-func (set Set) IsSuperset(other Set) bool {
+func (set Set) IsSuperset(other Set) bool { // nolint
 	return other.IsSubset(set)
 }
 
-func (set Set) IsProperSuperset(other Set) bool {
+func (set Set) IsProperSuperset(other Set) bool { // nolint
 	return set.IsSuperset(other) && !set.Equal(other)
 }

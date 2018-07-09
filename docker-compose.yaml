@@ -14,6 +14,8 @@ services:
       - backend
     expose:
       - '8080'
+    volumes:
+      - booru_data:/root/.booru/
     depends_on:
       - traefik
 
@@ -90,4 +92,4 @@ networks:
 volumes:
   portainer_data:
   gitea_data:
-  minio_data:
+  booru_data:

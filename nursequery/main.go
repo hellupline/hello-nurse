@@ -28,10 +28,10 @@ type (
 )
 
 var (
-	booruFetchStage0    = make(chan *TagPage, 100)
 	booruDownloadStage0 = make(chan *NurseDownloadTask, 100)
+	booruFetchStage0    = make(chan *TagPage, 100)
 
-	database = nursetags.Database{}
+	database = nursetags.NewDatabase()
 
 	baseDir string
 )

@@ -8,7 +8,7 @@ require (
 	github.com/go-playground/universal-translator v0.16.0
 	github.com/go-playground/validator v0.0.0-20180514145739-f28cb45dc0f0
 	github.com/google/gofuzz v0.0.0-20170612174753-24818f796faf
-	github.com/hellupline/hello-nurse/nursetags v0.0.0-20180709021711-e8a732473985
+	github.com/hellupline/hello-nurse/nursetags v0.0.0-20180709033132-10b64eba2398
 	github.com/mattn/go-isatty v0.0.3
 	github.com/onsi/ginkgo v1.5.0
 	github.com/onsi/gomega v1.4.0

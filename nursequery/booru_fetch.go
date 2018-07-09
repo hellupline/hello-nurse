@@ -59,7 +59,6 @@ func SaveToQueryServer(tag *TagPage, out chan<- *TagPage) {
 			Tags: post.Tags(),
 			Type: "booru-image",
 		}
-
 		database.PostCreate(obj)
 	}
 	out <- tag

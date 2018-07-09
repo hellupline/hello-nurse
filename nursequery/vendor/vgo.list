@@ -35,7 +35,7 @@ github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
 # github.com/google/gofuzz v0.0.0-20170612174753-24818f796faf
 github.com/google/gofuzz
-# github.com/hellupline/hello-nurse/nursetags v0.0.0-20180709033132-10b64eba2398
+# github.com/hellupline/hello-nurse/nursetags v0.0.0-20180709050110-eda9ab2d1677
 github.com/hellupline/hello-nurse/nursetags
 # github.com/json-iterator/go v0.0.0-20170829155851-36b14963da70
 github.com/json-iterator/go

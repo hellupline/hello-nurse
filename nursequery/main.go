@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
 	"os/user"
 	"path/filepath"
 
@@ -31,6 +33,8 @@ var (
 	booruDownloadStage0 = make(chan *NurseDownloadTask, 100)
 	booruFetchStage0    = make(chan *TagPage, 100)
 
+	quit = make(chan os.Signal)
+
 	database = nursetags.NewDatabase()
 
 	baseDir string
@@ -45,6 +49,11 @@ func init() {
 }
 
 func main() {
+	{
+		if f, err := os.Open(filepath.Join(baseDir, "db.gob")); err == nil {
+			database.Read(f)
+		}
+	}
 	r := gin.Default()
 
 	r.Use(static.Serve("/files", static.LocalFile(filepath.Join(baseDir, "files"), true)))
@@ -93,7 +102,25 @@ func main() {
 		}
 	}()
 
-	r.Run()
+	srv := &http.Server{
+		Addr:    ":8080",
+		Handler: r,
+	}
+
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("listen: %s\n", err)
+		}
+	}()
+
+	signal.Notify(quit, os.Interrupt)
+	<-quit
+
+	{
+		if f, err := os.Create(filepath.Join(baseDir, "db.gob")); err == nil {
+			database.Write(f)
+		}
+	}
 }
 
 func bindErrorResponse(err error) map[string][]string {

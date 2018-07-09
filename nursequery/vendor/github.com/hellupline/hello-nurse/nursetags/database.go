@@ -1,15 +1,20 @@
 package nursetags
 
 import (
+	"encoding/gob"
+	"io"
 	"sync"
 )
 
 type (
 	Database struct { // nolint
+		sync.RWMutex
+		Tables
+	}
+
+	Tables struct { // nolint
 		Posts PostsDB
 		Tags  TagsDB
-
-		sync.RWMutex
 	}
 
 	PostsDB  map[PostKey]PostData // nolint
@@ -38,9 +43,34 @@ type (
 
 func NewDatabase() *Database { // nolint
 	return &Database{
-		Posts: PostsDB{},
-		Tags:  TagsDB{},
+		Tables: Tables{
+			Posts: PostsDB{},
+			Tags:  TagsDB{},
+		},
 	}
+}
+
+func (d *Database) Read(r io.Reader) error {
+	var t Tables
+
+	d.Lock()
+	defer d.Unlock()
+
+	err := gob.NewDecoder(r).Decode(&t)
+	if err != nil {
+		return err
+	}
+
+	d.Tags = t.Tags
+	d.Posts = t.Posts
+	return nil
+}
+
+func (d *Database) Write(w io.Writer) error {
+	d.RLock()
+	defer d.RUnlock()
+
+	return gob.NewEncoder(w).Encode(d.Tables)
 }
 
 func (d *Database) PostIndex(query string) []PostData { // nolint

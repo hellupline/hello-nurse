@@ -36,6 +36,13 @@ type (
 	}
 )
 
+func NewDatabase() *Database { // nolint
+	return &Database{
+		Posts: PostsDB{},
+		Tags:  TagsDB{},
+	}
+}
+
 func (d *Database) PostIndex(query string) []PostData { // nolint
 	posts := make([]PostData, 0)
 

@@ -2,6 +2,7 @@ package main // import "github.com/hellupline/hello-nurse/nursequery"
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -81,7 +82,10 @@ func main() {
 		}
 	}
 
-	r.GET("/", HttpHandleHealthCheck)
+	r.GET("/", func(c *gin.Context) {
+		data, _ := ioutil.ReadFile("./index.html")
+		c.String(http.StatusOK, string(data))
+	})
 	r.GET("/_ah/health", HttpHandleHealthCheck)
 
 	go func() {

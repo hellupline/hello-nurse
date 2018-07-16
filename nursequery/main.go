@@ -84,6 +84,7 @@ func main() {
 
 	r.GET("/", func(c *gin.Context) {
 		data, _ := ioutil.ReadFile("./index.html")
+		c.Header("Content-Type", "text/html")
 		c.String(http.StatusOK, string(data))
 	})
 	r.GET("/_ah/health", HttpHandleHealthCheck)

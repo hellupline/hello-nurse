@@ -1,5 +1,5 @@
 # Go parameters
-GOCMD=vgo
+GOCMD=go
 GOBUILD=$(GOCMD) build
 GOCLEAN=$(GOCMD) clean
 GOTEST=$(GOCMD) test
@@ -31,3 +31,6 @@ build-darwin:
 
 build-windows:
 	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 $(GOBUILD) -o $(BINARY_NAME)_windows.exe -v ./...
+
+build-docker:
+	docker run --rm -it -v "${PWD}:/go/src/github.com/hellupline/hello-nurse" -w "/go/src/github.com/hellupline/hello-nurse" -e "CGO_ENABLED=0" golang make build

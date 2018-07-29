@@ -22,6 +22,8 @@ clean:
 	rm -f $(BINARY_NAME)
 
 
+dist: build-linux build-darwin build-windows
+
 # Cross compilation
 build-linux:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) -o $(BINARY_NAME)_linux -v ./...
@@ -33,4 +35,4 @@ build-windows:
 	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 $(GOBUILD) -o $(BINARY_NAME)_windows.exe -v ./...
 
 build-docker:
-	docker run --rm -it -v "${PWD}:/go/src/github.com/hellupline/hello-nurse" -w "/go/src/github.com/hellupline/hello-nurse" -e "CGO_ENABLED=0" golang make build
+	docker run --rm -it -v "${PWD}:/go/src/github.com/hellupline/hello-nurse" -w "/go/src/github.com/hellupline/hello-nurse" golang make build

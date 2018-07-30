@@ -2,3 +2,5 @@ hello-nurse_linux
 hello-nurse_darwin
 hello-nurse_windows
 hello-nurse
+
+.mypy_cache

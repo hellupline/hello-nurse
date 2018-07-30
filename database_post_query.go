@@ -33,6 +33,13 @@ func (d *Database) eval(t ast.Expr) PostKeySet {
 
 func (d *Database) evalBinaryExpr(t *ast.BinaryExpr) PostKeySet {
 	switch t.Op {
+	case token.MUL:
+		return d.eval(t.X).Intersect(d.eval(t.Y))
+	case token.ADD:
+		return d.eval(t.X).Union(d.eval(t.Y))
+	case token.SUB:
+		return d.eval(t.X).Difference(d.eval(t.Y))
+
 	case token.AND:
 		return d.eval(t.X).Intersect(d.eval(t.Y))
 	case token.OR:

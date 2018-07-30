@@ -7,7 +7,6 @@ services:
       dockerfile: Dockerfile
       context: ./nursequery/
     image: hellupline/nursequery
-    env_file: development.env
     restart: always
     expose:
       - '8080'

@@ -1,34 +1,14 @@
 package main
 
 import (
-	"io/ioutil"
-	"log"
 	"net/http"
 	"sort"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
-	"gopkg.in/go-playground/pool.v3"
 )
 
-type (
-	PostsResource struct{} // nolint
-
-	TagsResource struct{} // nolint
-
-	TasksResource struct { // nolint
-		Pool pool.Pool
-	}
-)
-
-func httpHandleIndex(w http.ResponseWriter, r *http.Request) {
-	data, _ := ioutil.ReadFile("./index.html")
-
-	w.WriteHeader(http.StatusOK)
-	w.Header().Set("Content-Type", "text/html")
-
-	_, _ = w.Write(data)
-}
+type PostsResource struct{} // nolint
 
 func (rs PostsResource) Routes() chi.Router { // nolint
 	r := chi.NewRouter()
@@ -91,49 +71,4 @@ func (rs PostsResource) Delete(w http.ResponseWriter, r *http.Request) { // noli
 	database.PostDelete(key)
 
 	w.WriteHeader(http.StatusNoContent)
-}
-
-func (rs TagsResource) Routes() chi.Router { // nolint
-	r := chi.NewRouter()
-
-	r.Route("/{key}", func(r chi.Router) {
-		r.Get("/", rs.Get)
-	})
-
-	r.Get("/", rs.Index)
-
-	return r
-}
-
-func (rs TagsResource) Index(w http.ResponseWriter, r *http.Request) { // nolint
-	tagNames := database.TagIndex()
-	for _, c := range tagNames {
-		log.Println(c)
-	}
-	sort.Slice(tagNames, func(i, j int) bool {
-		return tagNames[i].Count > tagNames[j].Count
-	})
-
-	w.WriteHeader(http.StatusOK)
-	_ = render.RenderList(w, r, NewTagListResponse(tagNames))
-}
-
-func (rs TagsResource) Get(w http.ResponseWriter, r *http.Request) { // nolint
-	_, _ = w.Write([]byte("todo get"))
-}
-
-func (rs TasksResource) Routes() chi.Router { // nolint
-	r := chi.NewRouter()
-
-	r.Route("/booru", func(r chi.Router) {
-		r.Post("/fetch-tasks", rs.BooruFetchTags)
-	})
-
-	return r
-}
-
-func (rs TasksResource) BooruFetchTags(w http.ResponseWriter, r *http.Request) { // nolint
-	rs.Pool.Queue(GetBooruTagPage(rs.Pool, "konachan.net", "eureka_seven", 0))
-
-	w.WriteHeader(http.StatusCreated)
 }

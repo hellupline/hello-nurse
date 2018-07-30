@@ -1,6 +1,7 @@
 package main // import "github.com/hellupline/hello-nurse"
 
 import (
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -35,6 +36,15 @@ func main() {
 		}
 	}
 
+	defer func() {
+		// defer after load, do not save if could not open first
+		if f, err := os.Create(filepath.Join(baseDir, "db.gob")); err == nil {
+			if err := database.Write(f); err != nil {
+				log.Fatal(err)
+			}
+		}
+	}()
+
 	p := pool.NewLimited(8)
 	defer p.Close()
 
@@ -59,10 +69,13 @@ func main() {
 
 	signal.Notify(quit, os.Interrupt)
 	<-quit
+}
 
-	if f, err := os.Create(filepath.Join(baseDir, "db.gob")); err == nil {
-		if err := database.Write(f); err != nil {
-			log.Fatal(err)
-		}
-	}
+func httpHandleIndex(w http.ResponseWriter, r *http.Request) {
+	data, _ := ioutil.ReadFile("./index.html")
+
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "text/html")
+
+	_, _ = w.Write(data)
 }

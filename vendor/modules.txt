@@ -1,6 +1,8 @@
 # github.com/go-chi/chi v3.3.2+incompatible
 github.com/go-chi/chi
 github.com/go-chi/chi/middleware
+# github.com/go-chi/cors v1.0.0
+github.com/go-chi/cors
 # github.com/go-chi/render v1.0.1
 github.com/go-chi/render
 # github.com/sirupsen/logrus v1.0.6

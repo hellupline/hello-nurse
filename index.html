@@ -28,6 +28,15 @@
         <script type="text/babel">
             var httpURL = 'http://localhost:8080';
 
+            axios.interceptors.response.use(
+                (response) => {
+                    return response;
+                },
+                (error) => {
+                    return Promise.reject(error.response);
+                }
+            )
+
             class Application extends React.Component {
                 render() {
                     return <PostsController />;
@@ -38,7 +47,7 @@
                 constructor(props) {
                     super(props);
                     this.state = {
-                        query: '("mobile_suit_gundam" & "sky") | "eureka_seven" ^ "angel" ^ "touhou"',
+                        query: '("mobile_suit_gundam" & "sky") | "eureka_seven" - "angel" - "touhou"',
                         selected_posts: [],
                     };
                 }
@@ -66,7 +75,7 @@
                     event.preventDefault();
                 }
 
-                addPost = (post) => {
+                SelectPost = (post) => {
                     const selected_posts = [...new Set([...this.state.selected_posts, post])];
                     this.setState({ selected_posts });
                 }
@@ -95,12 +104,14 @@
                             </Reactstrap.Row>
                             <Reactstrap.Row>
                                 <Reactstrap.Col sm="9">
-                                    <PostsIndex addPost={this.addPost} query={query} />
+                                    <PostsIndex SelectPost={this.SelectPost} query={query} />
                                 </Reactstrap.Col>
                                 <Reactstrap.Col sm="3">
-                                    <ul> {selected_posts.map(post => (
-                                        <li> <PostDetail namespace={post.namespace} key_={post.key} /> </li>
-                                    ))} </ul>
+                                    <ul>
+                                        {selected_posts.map(post => (
+                                            <li> <PostDetail type={post.type} key_={post.key} /> </li>
+                                        ))}
+                                    </ul>
                                 </Reactstrap.Col>
                             </Reactstrap.Row>
                         </Reactstrap.Container>
@@ -126,9 +137,9 @@
                 }
 
                 onClickAddPost = (event, post) => {
-                    const { addPost } = this.props;
+                    const { SelectPost } = this.props;
 
-                    addPost(post);
+                    SelectPost(post);
 
                     event.preventDefault();
                 }
@@ -160,9 +171,8 @@
                 return (
                     <li style={{"display": "inline-block"}}>
                         <a href="#" onClick={e => onClick(e, post)}>
-                            {/*<img src={`https:${post.value.preview_url}`} alt={post.tags.join(" ")} title={post.tags.join(" ")} />*/}
-                            <img src="http://via.placeholder.com/250x250" alt={post.tags.join(" ")} title={post.tags.join(" ")} />
-
+                            {/*<img src="http://via.placeholder.com/250x250" alt={post.tags.join(" ")} title={post.tags.join(" ")} />*/}
+                            <img src={`https:${post.value.preview_url}`} alt={post.tags.join(" ")} title={post.tags.join(" ")} />
                         </a>
                     </li>
                 )
@@ -179,20 +189,20 @@
                 }
 
                 componentDidUpdate(prevProps) {
-                    if ( prevProps.namespace !== this.props.namespace || prevProps.key_ !== this.props.key_ ) {
+                    if ( prevProps.type !== this.props.type || prevProps.key_ !== this.props.key_ ) {
                         this.fetchPost();
                     }
                 }
 
                 fetchPost() {
-                    const { namespace, key_ } = this.props;
-                    if ( (namespace === undefined) || (key_ === undefined) ) {
-                        console.log("missing key", { namespace, key_ });
+                    const { type, key_ } = this.props;
+                    if ( (type === undefined) || (key_ === undefined) ) {
+                        console.log("missing key", { type, key_ });
                         return
                     };
 
 
-                    axios.get(`${httpURL}/v1/posts/${namespace}/${key_}`)
+                    axios.get(`${httpURL}/v1/posts/${type}/${key_}`)
                         .catch(error => { console.error(error); })
                         .then(response => {
                             const post = response.data;
@@ -202,13 +212,15 @@
                 }
 
                 render() {
-                    const { namespace, key_ } = this.props;
+                    const { type, key_ } = this.props;
                     const { post } = this.state;
 
-                    if ( (namespace === undefined) || (key_ === undefined) || post.value === undefined ) return null;
+                    if ( (type === undefined) || (key_ === undefined) || post.value === undefined ) return null;
 
                     return (
-                        <div>{post.value.file_url}</div>
+                        <div>
+                            <img width="100" height="auto" src={`https:${post.value.preview_url}`} alt={post.tags.join(" ")} title={post.tags.join(" ")} />
+                        </div>
                     )
                 }
             }

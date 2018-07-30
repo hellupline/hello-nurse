@@ -27,7 +27,7 @@ func BooruGetTagPage(p pool.Pool, domain, name string, page int) pool.WorkFunc {
 
 		if page == 0 {
 			for i := 1; i < pages; i++ {
-				p.Queue(GetBooruTagPage(p, domain, name, i))
+				p.Queue(BooruGetTagPage(p, domain, name, i))
 			}
 		}
 

@@ -15,7 +15,7 @@ def main():
     for row in r.json():
         session.post(FETCH_URL, json={
             "type": row["type"],
-            "key": row["type"],
+            "key": row["key"],
         })
 
 

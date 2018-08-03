@@ -5,7 +5,9 @@ services:
       - traefik.frontend.rule=Host:query.hellupline.com
     build:
       dockerfile: Dockerfile
-      context: ./nursequery/
+      context: ./
+    environment:
+      - "USER=root"
     image: hellupline/nursequery
     restart: always
     expose:

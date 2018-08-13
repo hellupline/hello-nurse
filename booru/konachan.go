@@ -24,7 +24,7 @@ type (
 
 	KonachanTag struct { // nolint: golint
 		Count    int            `xml:"count,attr"`
-		RawPosts []KonachanPost `xml:"posts"`
+		RawPosts []KonachanPost `xml:"post"`
 
 		TagName string `xml:"-"`
 		Page    int    `xml:"-"`
@@ -84,7 +84,6 @@ func (t *KonachanTag) Fetch() error { // nolint: golint
 			return err
 		}
 	}
-
 	return xml.Unmarshal(body, t)
 }
 

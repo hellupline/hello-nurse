@@ -1,6 +1,7 @@
 package nursehttp
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi"
@@ -33,9 +34,9 @@ func (rs TasksResource) BooruFetchTags(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client, ok := booru.GetClient("data.BooruFetchTask.Domain")
+	client, ok := booru.GetClient(data.BooruFetchTask.Domain)
 	if !ok {
-		// XXX: error message here
+		_, _ = w.Write([]byte(fmt.Sprintf("%s API not registered", data.BooruFetchTask.Domain)))
 		return
 	}
 	rs.TaskManager.BooruGetTagPage(client("/home/hellupline/.booru/cache/", 100), data.BooruFetchTask.Tag, 0)

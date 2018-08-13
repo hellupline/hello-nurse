@@ -25,17 +25,18 @@ func (tm *TaskManager) BooruGetTagPage(c booru.Client, name string, page int) po
 	return tm.pool.Queue(func(wu pool.WorkUnit) (interface{}, error) {
 		t := c.NewTag(name, page)
 
-		// t.Logger.Info("fetch started")
+		logger := log.WithFields(log.Fields{"name": name, "page": page})
+		logger.Info("fetch started")
 		if err := t.Fetch(); err != nil {
-			// t.Logger.WithError(err).Error("Failed to fetch TagPage")
+			logger.WithError(err).Error("Failed to fetch TagPage")
 			return nil, nil
 		}
 
 		pages := t.Pages()
-		// t.Logger.WithFields(log.Fields{
-		// 	"count": t.Count,
-		// 	"pages": pages,
-		// }).Info("fetch done")
+		logger.WithFields(log.Fields{
+			// "count": t.Count,
+			"pages": pages,
+		}).Info("fetch done")
 
 		// if I am the first one, I manage it
 		if page == 0 {

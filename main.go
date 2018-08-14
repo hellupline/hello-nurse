@@ -16,7 +16,7 @@ import (
 
 	"github.com/hellupline/hello-nurse/nursedatabase"
 	"github.com/hellupline/hello-nurse/nursehttp"
-	"github.com/hellupline/hello-nurse/nurseworkers"
+	"github.com/hellupline/hello-nurse/nursetasks"
 )
 
 var (
@@ -44,7 +44,7 @@ func main() {
 	p := pool.NewLimited(8)
 	defer p.Close()
 
-	taskManager := nurseworkers.NewTaskManager(db, p)
+	taskManager := nursetasks.NewTaskManager(db, p)
 
 	cors := cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"},

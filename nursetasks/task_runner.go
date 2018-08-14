@@ -1,4 +1,4 @@
-package nurseworkers
+package nursetasks
 
 import (
 	log "github.com/sirupsen/logrus"
@@ -6,7 +6,7 @@ import (
 
 	"github.com/hellupline/hello-nurse/nursedatabase"
 
-	"github.com/hellupline/hello-nurse/booru"
+	"github.com/hellupline/hello-nurse/booruapi"
 )
 
 type (
@@ -21,7 +21,7 @@ func NewTaskManager(db *nursedatabase.Database, p pool.Pool) *TaskManager { // n
 
 }
 
-func (tm *TaskManager) BooruGetTagPage(c booru.Client, name string, page int) pool.WorkUnit { // nolint: golint
+func (tm *TaskManager) BooruGetTagPage(c booruapi.Client, name string, page int) pool.WorkUnit { // nolint: golint
 	return tm.pool.Queue(func(wu pool.WorkUnit) (interface{}, error) {
 		t := c.NewTag(name, page)
 

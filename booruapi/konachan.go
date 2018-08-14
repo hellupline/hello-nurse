@@ -1,4 +1,4 @@
-package booru
+package booruapi
 
 import (
 	"encoding/xml"

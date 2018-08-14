@@ -7,13 +7,13 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 
-	"github.com/hellupline/hello-nurse/nurseworkers"
+	"github.com/hellupline/hello-nurse/nursetasks"
 
-	"github.com/hellupline/hello-nurse/booru"
+	"github.com/hellupline/hello-nurse/booruapi"
 )
 
 type TasksResource struct { // nolint: golint
-	TaskManager *nurseworkers.TaskManager
+	TaskManager *nursetasks.TaskManager
 }
 
 func (rs TasksResource) Routes() chi.Router { // nolint: golint
@@ -34,7 +34,7 @@ func (rs TasksResource) BooruFetchTags(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client, ok := booru.GetClient(data.BooruFetchTask.Domain)
+	client, ok := booruapi.GetClient(data.BooruFetchTask.Domain)
 	if !ok {
 		_, _ = w.Write([]byte(fmt.Sprintf("%s API not registered", data.BooruFetchTask.Domain)))
 		return

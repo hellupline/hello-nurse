@@ -1,4 +1,4 @@
-package nurseworkers
+package nursetasks
 
 import (
 	"io/ioutil"

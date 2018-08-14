@@ -1,4 +1,4 @@
-package booru
+package booruapi
 
 type (
 	NewClientFunc func(string, int) Client // nolint

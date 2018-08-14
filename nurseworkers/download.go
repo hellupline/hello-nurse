@@ -23,7 +23,7 @@ func DownloadPostFile(p nursedatabase.Post, baseDir string) error { // nolint: g
 		return nil
 	}
 
-	base := filepath.Join(baseDir, "files", p.Type)
+	base := filepath.Join(baseDir, p.Type)
 	if err := os.MkdirAll(base, 0750); err != nil {
 		logger.Error(err)
 		return err

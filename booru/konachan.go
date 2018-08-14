@@ -30,7 +30,7 @@ type (
 		Page    int    `xml:"-"`
 		Limit   int    `xml:"-"`
 
-		CacheDir string `xml:"-"`
+		Client *KonachanClient `xml:"-"`
 	}
 
 	KonachanPost struct { // nolint: golint
@@ -55,6 +55,7 @@ func (c *KonachanClient) NewTag(tagName string, page int) Tag { // nolint: golin
 		TagName: tagName,
 		Page:    page,
 		Limit:   c.Limit,
+		Client:  c,
 	}
 }
 
@@ -88,7 +89,7 @@ func (t *KonachanTag) Fetch() error { // nolint: golint
 }
 
 func (t *KonachanTag) filename() string { // nolint: golint
-	base := filepath.Join(t.CacheDir, "cache", "konachan.net", t.TagName)
+	base := filepath.Join(t.Client.CacheDir, t.Client.Name(), t.TagName)
 	_ = os.MkdirAll(base, 0750)
 
 	return filepath.Join(base, fmt.Sprintf("%04d.xml", t.Page))

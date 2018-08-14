@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"os/user"
 	"path/filepath"
 
@@ -19,6 +20,8 @@ import (
 )
 
 var (
+	quit = make(chan os.Signal)
+
 	baseDir string
 )
 
@@ -70,7 +73,12 @@ func main() {
 
 	r.Get("/", httpHandleIndex)
 
-	log.Fatal(http.ListenAndServe(":8080", r))
+	go func() {
+		log.Fatal(http.ListenAndServe(":8080", r))
+	}()
+
+	signal.Notify(quit, os.Interrupt)
+	<-quit
 }
 
 func httpHandleIndex(w http.ResponseWriter, r *http.Request) {
@@ -94,7 +102,6 @@ func readDatabase(db *nursedatabase.Database) error {
 		}
 		return err
 	}
-
 	return db.Read(f)
 }
 
@@ -103,6 +110,5 @@ func writeDatabase(db *nursedatabase.Database) error {
 	if err != nil {
 		return err
 	}
-
 	return db.Write(f)
 }

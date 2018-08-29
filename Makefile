@@ -5,18 +5,23 @@ GOCLEAN=$(GOCMD) clean
 GOTEST=$(GOCMD) test
 GOGET=$(GOCMD) get
 
-
 BINARY_NAME=hello-nurse
 
 
 all: build
 
-build:
+build: $(BINARY_NAME)
+
+
+$(BINARY_NAME): *.go
 	CGO_ENABLED=0 $(GOBUILD) -o $(BINARY_NAME) -v ./
+
 run: build
 	./$(BINARY_NAME)
+
 test:
 	CGO_ENABLED=0 $(GOTEST) -v ./...
+
 clean:
 	$(GOCLEAN)
 	rm -f $(BINARY_NAME)
